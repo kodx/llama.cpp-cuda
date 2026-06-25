@@ -6,8 +6,8 @@ Get up and running with llama.cpp CUDA binaries in 5 minutes.
 
 1. NVIDIA GPU (see [GPU compatibility](GPU-COMPATIBILITY.md) for supported architectures)
 2. NVIDIA driver installed (check with `nvidia-smi`):
-   - CUDA 12.9: Driver >= 575.51.03
-   - CUDA 13.3: Driver >= 610.43.02
+   - CUDA 12.9: Driver 525-575
+   - CUDA 13.3: Driver 580+
 3. Linux x86_64 or aarch64 (Ubuntu 24.04 compatible)
 
 ## Step 1: Check Your GPU
@@ -29,8 +29,8 @@ nvidia-smi | grep "Driver Version"
 ```
 
 Compare against minimum requirements:
-- CUDA 12.9: Driver >= 575.51.03
-- CUDA 13.3: Driver >= 610.43.02
+- CUDA 12.9: Driver 525-575
+- CUDA 13.3: Driver 580+
 
 **If your driver is too old, download the other CUDA version build or update your driver.**
 
@@ -179,8 +179,8 @@ If you see this, CUDA is working!
 Your driver is too old. Either:
 - Update driver to match your CUDA version
 - Or download the other CUDA version build:
-  - CUDA 12.9 requires driver >= 575.51.03
-  - CUDA 13.3 requires driver >= 610.43.02
+  - CUDA 12.9 requires driver 525-575
+  - CUDA 13.3 requires driver 580+
 
 ### "no CUDA-capable device is detected"
 ```bash

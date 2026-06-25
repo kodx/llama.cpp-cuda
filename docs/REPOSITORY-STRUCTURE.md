@@ -205,12 +205,12 @@ Scheduled Trigger (00:00 UTC) or Manual Trigger
 CUDA 12.9 (last CUDA 12.x for legacy GPUs):
     Architectures: 60, 61, 62, 70, 72
     (Pascal, Volta — dropped from CUDA 13)
-    Driver >= 575.51.03
+    Driver 525-575
 
 CUDA 13.3 (modern GPUs):
     Architectures: 75, 80, 86, 89, 90, 100, 103, 110, 120, 121
     (Turing, Ampere, Ada, Hopper, Blackwell)
-    Driver >= 610.43.02
+    Driver 580+
 ```
 
 ### Runner strategy

@@ -24,8 +24,8 @@ The official llama.cpp repository does not provide pre-built CUDA binaries. This
 
 | CUDA | GPU Architectures | Min. Driver |
 |------|------------------|-------------|
-| 12.9 | sm_60, sm_61, sm_62, sm_70, sm_72 | >= 575.51.03 |
-| 13.3 | sm_75, sm_80, sm_86, sm_89, sm_90, sm_100, sm_103, sm_110, sm_120, sm_121 | >= 610.43.02 |
+| 12.9 | sm_60, sm_61, sm_62, sm_70, sm_72 | 525-575 |
+| 13.3 | sm_75, sm_80, sm_86, sm_89, sm_90, sm_100, sm_103, sm_110, sm_120, sm_121 | 580+ |
 
 ### Host CPU Architectures
 
@@ -118,8 +118,8 @@ cat VERSION.txt
 
 - NVIDIA GPU with appropriate compute capability (see table above)
 - NVIDIA driver:
-  - CUDA 12.9: Driver >= 575.51.03
-  - CUDA 13.3: Driver >= 610.43.02
+  - CUDA 12.9: Driver 525-575
+  - CUDA 13.3: Driver 580+
 - Linux x86_64 or aarch64 (Ubuntu 24.04 compatible)
 
 ## Build Process

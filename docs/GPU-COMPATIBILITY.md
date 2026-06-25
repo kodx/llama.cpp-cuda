@@ -25,7 +25,7 @@ if torch.cuda.is_available():
 
 ### CUDA 12.9 (legacy — Pascal, Volta)
 
-Minimum driver: Linux **>= 575.51.03**
+Minimum driver: Linux **525-575**
 
 | Compute Cap. | Architecture | GPUs |
 |---|---|---|
@@ -36,7 +36,7 @@ Minimum driver: Linux **>= 575.51.03**
 
 ### CUDA 13.3 (modern — Turing and newer)
 
-Minimum driver: Linux **>= 610.43.02**
+Minimum driver: Linux **580+**
 
 | Compute Cap. | Architecture | GPUs |
 |---|---|---|
@@ -84,13 +84,13 @@ cat /proc/driver/nvidia/version
 ### Legacy GPUs (Pascal, Volta — GTX 10xx, Tesla P100, V100)
 **Use:** CUDA 12.9
 - These architectures were removed from CUDA 13
-- Requires driver >= 575.51.03
+- Requires driver 525-575
 - Builds available for both amd64 and arm64
 
 ### Modern GPUs (Turing and newer — RTX 20/30/40/50 series, A100, H100, B200)
 **Use:** CUDA 13.3
 - Full support for all modern architectures
-- Requires driver >= 610.43.02
+- Requires driver 580+
 - Latest CUDA optimizations
 
 ### Latest Hardware (Blackwell GB300, DGX Spark)
@@ -108,8 +108,8 @@ cat /proc/driver/nvidia/version
 ### "CUDA driver version is insufficient"
 - Update your NVIDIA driver to meet minimum requirements
 - Or download the other CUDA version build:
-  - Use CUDA 12.9 if your driver is 575.51.03 – 610.43.01
-  - Use CUDA 13.3 if your driver is 610.43.02+
+  - Use CUDA 12.9 if your driver is 525-575
+  - Use CUDA 13.3 if your driver is 580+
 - See the table above for exact minimum versions
 
 ### "No CUDA-capable device detected"

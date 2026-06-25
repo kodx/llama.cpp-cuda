@@ -197,6 +197,24 @@ jobs:
           tar -czf llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-${{ matrix.cuda.short }}
           tar -czf cuda-runtime-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-runtime-${{ matrix.cuda.short }}
           ls -lh *.tar.gz
+      - name: Smoke test
+        run: |
+          cd binaries
+          tarball="llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz"
+          if [ ! -f "$tarball" ]; then echo "Missing: $tarball"; exit 1; fi
+          echo "Tarball: $(stat -c%s "$tarball") bytes"
+          dir="smoke"
+          mkdir -p "$dir" && tar -xzf "$tarball" -C "$dir"
+          bindir="$dir/cuda-${{ matrix.cuda.short }}"
+          for bin in llama-cli llama-server llama-bench; do
+            if [ -f "$bindir/$bin" ] && [ -s "$bindir/$bin" ]; then
+              echo "Pass: $bin ($(stat -c%s "$bindir/$bin") bytes)"
+            fi
+          done
+          [ -f "$bindir/VERSION.txt" ] && cat "$bindir/VERSION.txt" || { echo "Missing VERSION.txt"; exit 1; }
+          ldd "$bindir/llama-cli" 2>/dev/null | grep -E "(cuda|cublas|cudart)" | head -3 && echo "Pass: CUDA linkage" || true
+          if timeout 10 "$bindir/llama-cli" --help >/dev/null 2>&1; then echo "Pass: llama-cli --help"; fi
+          rm -rf "$dir"
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
@@ -240,30 +258,24 @@ jobs:
             **Source:** https://github.com/ggml-org/llama.cpp/releases/tag/${{ needs.check-release.outputs.release_tag }}
             **Commit:** ${{ needs.check-release.outputs.release_hash }}
 
+            ## Downloads
+
+            **CUDA 12.9** (Pascal, Volta — driver 525-575)
+            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-amd64.tar.gz) — [CUDA Runtime 12.9 amd64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-12.9-amd64.tar.gz)
+            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-arm64.tar.gz) — [CUDA Runtime 12.9 arm64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-12.9-arm64.tar.gz)
+
+            **CUDA 13.3** (Turing and newer — driver 580+)
+            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-amd64.tar.gz) — [CUDA Runtime 13.3 amd64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-13.3-amd64.tar.gz)
+            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-arm64.tar.gz) — [CUDA Runtime 13.3 arm64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-13.3-arm64.tar.gz)
+
+            > **Note:** CUDA Runtime tarball is needed **only if your system does not have that CUDA version installed**. One-time download, reusable across builds.
+
             ## Supported GPUs
 
             | CUDA | Architectures | GPU families | Min. Driver |
             |------|--------------|--------------|-------------|
-            | 12.9 | sm_60, sm_61, sm_62, sm_70, sm_72 | **Pascal** (P100, GTX 10xx, Titan X), **Volta** (V100, Titan V), **Tegra** (Xavier) | >= 575.51.03 |
-            | 13.3 | sm_75 … sm_121 | **Turing** (RTX 20xx, T4), **Ampere** (RTX 30xx, A100), **Ada** (RTX 40xx, L40), **Hopper** (H100, H200), **Blackwell** (B200, RTX 50xx) | >= 610.43.02 |
-
-            **Which to choose:** Pascal or Volta → **CUDA 12.9**. Turing or newer → **CUDA 13.3**.
-
-            ## Binaries
-
-            | CUDA | x86_64 | aarch64 |
-            |------|--------|---------|
-            | 12.9 | [`llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-amd64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-amd64.tar.gz) | [`llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-arm64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-arm64.tar.gz) |
-            | 13.3 | [`llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-amd64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-amd64.tar.gz) | [`llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-arm64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-arm64.tar.gz) |
-
-            ## CUDA Runtime Libraries
-
-            | CUDA | x86_64 | aarch64 |
-            |------|--------|---------|
-            | 12.9 | [`cuda-runtime-12.9-amd64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-12.9-amd64.tar.gz) | [`cuda-runtime-12.9-arm64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-12.9-arm64.tar.gz) |
-            | 13.3 | [`cuda-runtime-13.3-amd64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-13.3-amd64.tar.gz) | [`cuda-runtime-13.3-arm64.tar.gz`](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-13.3-arm64.tar.gz) |
-
-            > **Note:** The CUDA Runtime Libraries tarball is needed **only if your system does not have the matching CUDA version installed**. It is a one-time download — reuse across builds with the same CUDA version. Extract it alongside the binaries so the `cuda-runtime-<ver>/` directory is a sibling of the binary directory.
+            | 12.9 | sm_60–sm_72 | Pascal (P100, GTX 10xx), Volta (V100) | 525-575 |
+            | 13.3 | sm_75–sm_121 | Turing (RTX 20xx), Ampere (RTX 30xx, A100) and newer | 580+ |
 
             Full docs: [README](https://github.com/${{ github.repository }})
           files: release-assets/*

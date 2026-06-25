@@ -80,8 +80,8 @@ export LD_LIBRARY_PATH=/path/to/cuda-runtime-13.3:$LD_LIBRARY_PATH
    ```
 
 2. **Use the other CUDA version build**:
-   - CUDA 12.9 requires driver >= 575.51.03
-   - CUDA 13.3 requires driver >= 610.43.02
+   - CUDA 12.9 requires driver 525-575
+   - CUDA 13.3 requires driver 580+
    - See [GPU Compatibility Guide](GPU-COMPATIBILITY.md) for driver requirements
 
 #### "no CUDA-capable device is detected"
