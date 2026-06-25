@@ -31,7 +31,7 @@ We welcome suggestions for:
 Use the provided test script to build locally:
 
 ```bash
-./scripts/test-build.sh 12.6.3
+./scripts/test-build.sh 12.9.2
 ```
 
 ### Modifying Build Configuration

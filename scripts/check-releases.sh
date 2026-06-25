@@ -14,24 +14,24 @@ echo ""
 
 # Get latest upstream release
 echo "Checking llama.cpp repository..."
-UPSTREAM_RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
-UPSTREAM_DATE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | grep '"published_at":' | sed -E 's/.*"([^"]+)".*/\1/')
+UPSTREAM_RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
+UPSTREAM_DATE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.published_at')
 
 echo -e "Latest upstream release: ${GREEN}$UPSTREAM_RELEASE${NC}"
 echo "Published: $UPSTREAM_DATE"
 echo ""
 
 # Get latest release from this repo
-echo "Checking ai-dock/llama.cpp-cuda repository..."
-OUR_RELEASE=$(curl -s https://api.github.com/repos/ai-dock/llama.cpp-cuda/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' 2>/dev/null || echo "none")
+echo "Checking kodx/llama.cpp-cuda repository..."
+OUR_RELEASE=$(curl -s https://api.github.com/repos/kodx/llama.cpp-cuda/releases/latest | jq -r '.tag_name // "none"' 2>/dev/null || echo "none")
 
 if [ "$OUR_RELEASE" = "none" ] || [ -z "$OUR_RELEASE" ]; then
-    echo -e "${RED}No releases found in ai-dock/llama.cpp-cuda${NC}"
+    echo -e "${RED}No releases found in kodx/llama.cpp-cuda${NC}"
     echo -e "${YELLOW}A new build should be triggered!${NC}"
     exit 0
 fi
 
-OUR_DATE=$(curl -s https://api.github.com/repos/ai-dock/llama.cpp-cuda/releases/latest | grep '"published_at":' | sed -E 's/.*"([^"]+)".*/\1/')
+OUR_DATE=$(curl -s https://api.github.com/repos/kodx/llama.cpp-cuda/releases/latest | jq -r '.published_at')
 
 echo -e "Latest CUDA build: ${GREEN}$OUR_RELEASE${NC}"
 echo "Published: $OUR_DATE"
@@ -46,12 +46,12 @@ else
     echo "llama.cpp has released $UPSTREAM_RELEASE but we only have $OUR_RELEASE"
     echo ""
     echo "A new build should be triggered automatically within 24 hours."
-    echo "Or manually trigger: https://github.com/ai-dock/llama.cpp-cuda/actions"
+    echo "Or manually trigger: https://github.com/kodx/llama.cpp-cuda/actions"
 fi
 
 echo ""
 echo "Links:"
 echo "  Upstream: https://github.com/ggml-org/llama.cpp/releases/tag/$UPSTREAM_RELEASE"
 if [ "$OUR_RELEASE" != "none" ]; then
-    echo "  Our build: https://github.com/ai-dock/llama.cpp-cuda/releases/tag/$OUR_RELEASE"
+    echo "  Our build: https://github.com/kodx/llama.cpp-cuda/releases/tag/$OUR_RELEASE"
 fi

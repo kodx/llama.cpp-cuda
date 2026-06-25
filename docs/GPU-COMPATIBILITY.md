@@ -23,56 +23,34 @@ if torch.cuda.is_available():
 
 ## Compute Capability Breakdown
 
-### 7.5 (Turing)
-- Tesla T4
-- GeForce RTX 2060, 2070, 2080, 2080 Ti
-- Quadro RTX 4000, 5000, 6000, 8000
-- GeForce GTX 1650, 1660 series
+### CUDA 12.9 (legacy — Pascal, Volta)
 
-**CUDA Support:** 12.4+
+Minimum driver: Linux **>= 575.51.03**
 
-### 8.0 (Ampere - Data Center)
-- NVIDIA A100
-- NVIDIA A30
+| Compute Cap. | Architecture | GPUs |
+|---|---|---|
+| 6.0 | Pascal — Data Center | Tesla P100 |
+| 6.1 / 6.2 | Pascal — Consumer/Pro | GTX 10xx, Titan XP, Titan X (Pascal), Tesla P40 |
+| 7.0 | Volta | Tesla V100, Titan V |
+| 7.2 | Tegra | Xavier |
 
-**CUDA Support:** 12.4+
+### CUDA 13.3 (modern — Turing and newer)
 
-### 8.6 (Ampere - Consumer/Pro)
-- GeForce RTX 3050, 3060, 3070, 3080, 3090
-- RTX A2000, A4000, A5000, A6000
-- NVIDIA A10, A40
+Minimum driver: Linux **>= 610.43.02**
 
-**CUDA Support:** 12.4+
+| Compute Cap. | Architecture | GPUs |
+|---|---|---|
+| 7.5 | Turing | Tesla T4, RTX 2060–2080 Ti, Quadro RTX, GTX 1650/1660 |
+| 8.0 | Ampere — Data Center | A100, A30 |
+| 8.6 | Ampere — Consumer/Pro | RTX 3050–3090, RTX A-series, A10, A40 |
+| 8.9 | Ada Lovelace / Hopper-L | RTX 4060–4090, RTX 6000 Ada, L4, L40, L40S |
+| 9.0 | Hopper | H100, H200 |
+| 10.0 | Blackwell | B100, B200, GB200 |
+| 10.3 | Blackwell Ultra | GB300 |
+| 11.0 | Grace Blackwell | DGX Spark |
+| 12.0 / 12.1 | Blackwell — Consumer | RTX Pro 6000, RTX 5000 series |
 
-### 8.9 (Ada Lovelace / Hopper L-series)
-- GeForce RTX 4060, 4070, 4080, 4090
-- RTX 6000 Ada
-- NVIDIA L4, L40, L40S
-
-**CUDA Support:** 12.4+
-
-### 9.0 (Hopper)
-- NVIDIA H100
-- NVIDIA H200
-
-**CUDA Support:** 12.4+
-
-### 10.0 (Blackwell)
-- NVIDIA B100
-- NVIDIA B200
-- NVIDIA GB200
-
-**CUDA Support:** 12.8+ (minimum)
-
-## Minimum CUDA Driver Versions
-
-| CUDA Toolkit | Minimum Driver (Linux) | Minimum Driver (Windows) |
-|--------------|------------------------|--------------------------|
-| 12.4         | 550.54.15             | 552.22                   |
-| 12.6         | 560.28.03             | 561.09                   |
-| 12.8         | 570.15                | 571.00                   |
-| 12.9         | 580.13                | 581.00                   |
-| 13.0         | 590.xx                | 591.xx                   |
+> **Linux only** — NVIDIA drivers on Windows are not bundled with the CUDA toolkit since CUDA 13.1; install the display driver separately from [nvidia.com](https://www.nvidia.com/download/index.aspx).
 
 ## Checking Your Driver Version
 
@@ -83,50 +61,56 @@ nvidia-smi
 cat /proc/driver/nvidia/version
 ```
 
-### Windows
-```cmd
-nvidia-smi
-```
-
 ## CUDA Compatibility Matrix
 
-| GPU Architecture | Compute Cap. | CUDA 12.4 | CUDA 12.6 | CUDA 12.8 | CUDA 12.9 | CUDA 13.0 |
-|-----------------|--------------|-----------|-----------|-----------|-----------|-----------|
-| Turing          | 7.5          | ✅        | ✅        | ✅        | ✅        | ✅        |
-| Ampere (DC)     | 8.0          | ✅        | ✅        | ✅        | ✅        | ✅        |
-| Ampere          | 8.6          | ✅        | ✅        | ✅        | ✅        | ✅        |
-| Ada/Hopper-L    | 8.9          | ✅        | ✅        | ✅        | ✅        | ✅        |
-| Hopper          | 9.0          | ✅        | ✅        | ✅        | ✅        | ✅        |
-| Blackwell       | 10.0         | ❌        | ❌        | ✅        | ✅        | ✅        |
+| GPU Architecture | Compute Cap. | CUDA 12.9 | CUDA 13.3 |
+|-----------------|--------------|-----------|-----------|
+| Pascal (DC)     | 6.0          | ✅        | ❌        |
+| Pascal          | 6.1 / 6.2    | ✅        | ❌        |
+| Volta           | 7.0          | ✅        | ❌        |
+| Tegra           | 7.2          | ✅        | ❌        |
+| Turing          | 7.5          | ❌        | ✅        |
+| Ampere (DC)     | 8.0          | ❌        | ✅        |
+| Ampere          | 8.6          | ❌        | ✅        |
+| Ada/Hopper-L    | 8.9          | ❌        | ✅        |
+| Hopper          | 9.0          | ❌        | ✅        |
+| Blackwell       | 10.0         | ❌        | ✅        |
+| Blackwell Ultra | 10.3         | ❌        | ✅        |
+| Grace Blackwell | 11.0         | ❌        | ✅        |
+| Blackwell (con) | 12.0 / 12.1  | ❌        | ✅        |
 
 ## Recommendations by Use Case
 
-### Personal Desktop/Workstation (RTX 20/30/40 series)
-**Recommended:** CUDA 12.6.3 or 12.8.0
-- Widest driver compatibility
-- Stable and well-tested
-- Supports all desktop GPUs
+### Legacy GPUs (Pascal, Volta — GTX 10xx, Tesla P100, V100)
+**Use:** CUDA 12.9
+- These architectures were removed from CUDA 13
+- Requires driver >= 575.51.03
+- Builds available for both amd64 and arm64
 
-### Data Center (A100, H100)
-**Recommended:** CUDA 12.8.0 or 12.9.0
-- Latest optimizations for data center GPUs
-- Better performance for Hopper architecture
+### Modern GPUs (Turing and newer — RTX 20/30/40/50 series, A100, H100, B200)
+**Use:** CUDA 13.3
+- Full support for all modern architectures
+- Requires driver >= 610.43.02
+- Latest CUDA optimizations
 
-### Latest Hardware (Blackwell)
-**Required:** CUDA 12.8.0 or higher
-- Blackwell architecture requires CUDA 12.8+
-- Use CUDA 13.0 for latest features
+### Latest Hardware (Blackwell GB300, DGX Spark)
+**Use:** CUDA 13.3
+- Required for sm_103, sm_110, sm_120, sm_121 support
+- Latest Blackwell optimizations
 
-### Maximum Compatibility (Older GPUs)
-**Recommended:** CUDA 12.4.1
-- Supports older drivers
-- Good for Tesla T4 and RTX 20 series
+### Data Center (A100, H100, B200)
+**Use:** CUDA 13.3
+- Best performance for data center GPUs
+- Support for latest Hopper and Blackwell features
 
 ## Troubleshooting
 
 ### "CUDA driver version is insufficient"
 - Update your NVIDIA driver to meet minimum requirements
-- Or download a build with an older CUDA version
+- Or download the other CUDA version build:
+  - Use CUDA 12.9 if your driver is 575.51.03 – 610.43.01
+  - Use CUDA 13.3 if your driver is 610.43.02+
+- See the table above for exact minimum versions
 
 ### "No CUDA-capable device detected"
 - Check if GPU is properly installed: `nvidia-smi`
@@ -135,7 +119,8 @@ nvidia-smi
 
 ### Performance issues
 - Ensure correct CUDA version for your GPU architecture
-- For Hopper/Blackwell, use CUDA 12.8+
+  - Pascal/Volta → CUDA 12.9
+  - Turing+ → CUDA 13.3
 - Check GPU utilization: `nvidia-smi dmon`
 
 ### Binary not found
@@ -143,8 +128,17 @@ nvidia-smi
 - Check permissions: `chmod +x llama-*`
 - Ensure you're in the correct directory
 
+## GPU Architecture by CUDA Version
+
+```
+CUDA 12.9 (legacy): sm_60, sm_61, sm_62, sm_70, sm_72
+CUDA 13.3 (modern): sm_75, sm_80, sm_86, sm_89, sm_90,
+                     sm_100, sm_103, sm_110, sm_120, sm_121
+```
+
 ## Additional Resources
 
-- [NVIDIA CUDA Compatibility Guide](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/)
+- [NVIDIA CUDA Compatibility Guide](https://docs.nvidia.com/deploy/cuda-compatibility/index.html)
+- [CUDA Toolkit, Driver, and Architecture Matrix](https://docs.nvidia.com/datacenter/tesla/drivers/cuda-toolkit-driver-and-architecture-matrix.html)
 - [GPU Compute Capability Table](https://developer.nvidia.com/cuda-gpus)
 - [NVIDIA Driver Downloads](https://www.nvidia.com/download/index.aspx)

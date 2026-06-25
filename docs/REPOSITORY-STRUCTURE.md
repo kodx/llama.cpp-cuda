@@ -1,7 +1,7 @@
 # Repository Structure
 
 ```
-ai-dock/llama.cpp-cuda/
+kodx/llama.cpp-cuda/
 ├── .github/
 │   ├── workflows/
 │   │   └── build-cuda.yml          # Main CI/CD workflow for building with CUDA
@@ -10,19 +10,19 @@ ai-dock/llama.cpp-cuda/
 │       └── feature_request.md       # Feature request template
 │
 ├── docs/
-│   ├── QUICKSTART.md               # Quick start guide for new users
+│   ├── QUICKSTART.md                # Quick start guide for new users
 │   ├── GPU-COMPATIBILITY.md         # Comprehensive GPU/CUDA compatibility reference
-│   └── TROUBLESHOOTING.md          # Detailed troubleshooting guide
+│   ├── REPOSITORY-STRUCTURE.md      # This file
+│   └── TROUBLESHOOTING.md           # Detailed troubleshooting guide
 │
 ├── scripts/
-│   ├── test-build.sh               # Local build testing script
-│   └── check-releases.sh           # Check for new upstream releases
+│   ├── test-build.sh                # Local build testing script
+│   └── check-releases.sh            # Check for new upstream releases
 │
 ├── README.md                        # Main project documentation
 ├── LICENSE                          # MIT License
 ├── CONTRIBUTING.md                  # Contribution guidelines
-└── .gitignore                      # Git ignore rules
-
+└── .gitignore                       # Git ignore rules
 ```
 
 ## File Descriptions
@@ -33,42 +33,50 @@ ai-dock/llama.cpp-cuda/
 The heart of the project. This GitHub Actions workflow:
 - Runs daily at 00:00 UTC
 - Checks for new llama.cpp releases
-- Builds llama.cpp with CUDA for multiple versions
-- Creates releases with binary artifacts
+- Builds llama.cpp with CUDA for 2 versions (12.9 + 13.3), each for 2 architectures (amd64 + arm64)
+- CUDA runtime libraries in separate tarball (one-time download)
+- Creates GitHub releases with binary artifacts
 - Can be manually triggered
 
 **Key features:**
-- Matrix builds across 5 CUDA versions
-- Architecture-specific compilation
-- Automated release creation
-- Artifact packaging
+- Matrix: 4 builds (2 CUDA versions × 2 architectures)
+- `ubuntu-24.04` for amd64, `ubuntu-24.04-arm` for arm64
+- `maximize-build-space` cleanup step for CI runners
+- GPU architectures split by CUDA version:
+  - 12.9: sm_60, sm_61, sm_62, sm_70, sm_72 (Pascal, Volta)
+  - 13.3: sm_75–sm_121 (Turing and newer)
+- CPU multi-architecture dispatch: `GGML_CPU_ALL_VARIANTS=ON`, `GGML_BACKEND_DL=ON`
+- CUDA .so bundling via `ldd` detection, shipped as separate `cuda-runtime-<ver>-<arch>.tar.gz`
+- CUDA Docker images based on Ubuntu 24.04 (instead of 22.04)
+- Release body with per-CUDA-version GPU architecture table and driver requirements
 
 #### `README.md`
 Main documentation covering:
-- Project overview and purpose
+- Project overview and fork notice
+- List of changes from original kodx/llama.cpp-cuda
 - Supported CUDA versions and architectures
-- Usage instructions
-- System requirements
-- Download and installation guide
+- Usage instructions with CUDA version selection guide
+- System requirements with driver version tables
 
 ### Documentation (`docs/`)
 
 #### `QUICKSTART.md`
 Step-by-step guide for new users:
-1. Check GPU compatibility
-2. Download binaries
-3. Run first model
-4. Common options and commands
+1. Determine GPU compute capability
+2. Choose correct CUDA version (12.9 vs 13.3)
+3. Check driver compatibility
+4. Download and extract binaries
+5. Run first model
 
 Target audience: Users who want to get started immediately.
 
 #### `GPU-COMPATIBILITY.md`
 Comprehensive reference for:
-- GPU architecture details
-- Compute capability lookup
-- CUDA/driver version requirements
-- Compatibility matrix
-- How to find your GPU info
+- Full compute capability breakdown by GPU model
+- Architecture-to-CUDA-version mapping
+- Minimum driver requirements for each CUDA version
+- CUDA compatibility matrix
+- Recommendations by use case (legacy vs modern GPUs)
 
 Target audience: Users who need to verify compatibility or troubleshoot driver issues.
 
@@ -77,7 +85,7 @@ Detailed solutions for:
 - Installation issues
 - CUDA runtime problems
 - Performance problems
-- Build architecture issues
+- Build architecture issues (CUDA version mismatch)
 - Server issues
 
 Target audience: Users experiencing problems.
@@ -90,10 +98,13 @@ Allows local testing of the build process:
 ./scripts/test-build.sh [CUDA_VERSION] [LLAMA_TAG]
 ```
 
+Supported CUDA versions: 12.9.2, 13.3.0
+
 Features:
-- Uses same Docker images as CI
-- Validates CUDA version
-- Creates test binaries locally
+- Uses same Docker images and cmake flags as CI
+- Includes CPU ALL_VARIANTS and CUDA .so bundling
+- Validates CUDA version vs supported architectures
+- Creates test tarball for verification
 - Useful for development and debugging
 
 #### `check-releases.sh`
@@ -157,34 +168,72 @@ Scheduled Trigger (00:00 UTC) or Manual Trigger
               ↓
             [Yes]
               ↓
-    Build Matrix (5 CUDA versions)
+    Build Matrix (4 variants)
               ↓
-    ┌─────────┬─────────┬─────────┬─────────┬─────────┐
-    │ 12.4.1  │ 12.6.3  │ 12.8.0  │ 12.9.0  │ 13.0.0  │
-    └─────────┴─────────┴─────────┴─────────┴─────────┘
+    ┌─────────────────────────┬─────────────────────────┐
+    │       CUDA 12.9         │       CUDA 13.3         │
+    │   sm_60,61,62,70,72     │   sm_75–sm_121          │
+    ├────────────┬────────────┼────────────┬────────────┤
+    │   amd64    │   arm64    │   amd64    │   arm64    │
+    │ubuntu-24.04│ubuntu-24.04│ubuntu-24.04│ubuntu-24.04│
+    │            │  -arm      │            │  -arm      │
+    └────────────┴────────────┴────────────┴────────────┘
               ↓
-    Docker Build with CUDA
+    Docker Build (nvidia/cuda Docker image)
+    cmake: GGML_NATIVE=OFF, GGML_BACKEND_DL=ON,
+           GGML_CPU_ALL_VARIANTS=ON
               ↓
-    Package as Tarballs
+    Bundle CUDA .so via ldd
               ↓
-    Upload Artifacts
+    Package as Tarball
+    llama.cpp-bXXXX-cuda-<ver>-<arch>.tar.gz
               ↓
-    Create GitHub Release
+    Upload Artifact
               ↓
-    Tag Repository
+    (all 4 artifacts collected)
+              ↓
+    Generate SHA256SUMS
+              ↓
+    Create GitHub Release with one body
+              ↓
+    Delete old releases (keep last 5)
 ```
 
 ### Architecture Selection Logic
 
 ```
-CUDA 12.4.1, 12.6.3:
-    Architectures: 75, 80, 86, 89, 90
-    (No Blackwell support)
+CUDA 12.9 (last CUDA 12.x for legacy GPUs):
+    Architectures: 60, 61, 62, 70, 72
+    (Pascal, Volta — dropped from CUDA 13)
+    Driver >= 575.51.03
 
-CUDA 12.8.0, 12.9.0, 13.0.0:
-    Architectures: 75, 80, 86, 89, 90, 100
-    (Includes Blackwell)
+CUDA 13.3 (modern GPUs):
+    Architectures: 75, 80, 86, 89, 90, 100, 103, 110, 120, 121
+    (Turing, Ampere, Ada, Hopper, Blackwell)
+    Driver >= 610.43.02
 ```
+
+### Runner strategy
+
+| Arch | Runner | maximize-build-space |
+|---|---|---|
+| amd64 | ubuntu-24.04 | yes |
+| arm64 | ubuntu-24.04-arm | yes |
+
+### CUDA runtime bundling
+
+After the build, `ldd` is run on every binary in `build/bin/` to detect which CUDA
+shared libraries are needed. Those `.so` files (libcudart, libcublas, etc.) are copied
+into a separate `cuda-runtime-<ver>-<arch>.tar.gz` archive, separate from the llama.cpp
+binaries. This allows users to download the CUDA runtime once and reuse it across
+llama.cpp builds that use the same CUDA version.
+
+The binaries have RPATH set to `$ORIGIN:$ORIGIN/../cuda-runtime-<ver>`, so they first
+look for CUDA libraries in their own directory, then in the sibling `cuda-runtime-<ver>/`
+directory, and finally fall back to the system library path. This means both tarballs
+should be extracted in the same parent directory.
+
+`libcuda.so` is NOT bundled — it must come from the NVIDIA driver.
 
 ## Maintenance
 
@@ -195,9 +244,11 @@ CUDA 12.8.0, 12.9.0, 13.0.0:
    - Builds trigger automatically
 
 2. **Update CUDA versions** (when needed)
-   - Edit workflow matrix
+   - Check new CUDA Docker image availability
+   - Verify architecture support changes
+   - Update workflow matrix
    - Test with `test-build.sh`
-   - Update documentation
+   - Update all documentation
 
 3. **Review issues** (as needed)
    - Check for build problems
@@ -211,7 +262,6 @@ CUDA 12.8.0, 12.9.0, 13.0.0:
 
 Potential improvements:
 - Add support for ROCm (AMD GPUs)
-- Build for other architectures (aarch64)
 - Provide Docker images
 - Add automated benchmarking
 - Support for other GGML projects
@@ -244,3 +294,4 @@ Keep these in sync:
 - GPU-COMPATIBILITY.md compatibility matrix
 - QUICKSTART.md driver requirements
 - Workflow CUDA versions
+- REPOSITORY-STRUCTURE.md workflow description

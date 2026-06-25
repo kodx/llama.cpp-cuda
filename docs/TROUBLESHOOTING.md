@@ -32,6 +32,36 @@ sudo apt-get install nvidia-driver-XXX
 sudo ldconfig
 ```
 
+#### Bundled CUDA libraries not found
+
+**Problem:** Error about missing libcudart, libcublas, etc. even after extraction.
+
+**Solution:**
+The CUDA runtime libraries are shipped in a separate `cuda-runtime-<ver>-<arch>.tar.gz`
+archive. Both tarballs must be extracted in the same directory:
+
+```bash
+# Extract both tarballs in the same parent directory
+tar -xzf llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
+tar -xzf cuda-runtime-13.3-amd64.tar.gz
+
+# Verify the runtime directory exists
+ls -la cuda-runtime-13.3/
+
+# Then run binaries from the cuda-13.3/ directory
+cd cuda-13.3
+./llama-cli --help
+```
+
+The binaries have RPATH configured to find CUDA libraries in the sibling
+`cuda-runtime-<ver>/` directory automatically. If you extracted the tarballs to
+different locations, set `LD_LIBRARY_PATH` to point to the CUDA runtime directory:
+
+```bash
+export LD_LIBRARY_PATH=/path/to/cuda-runtime-13.3:$LD_LIBRARY_PATH
+./llama-cli --help
+```
+
 ### CUDA Runtime Issues
 
 #### "CUDA driver version is insufficient for CUDA runtime version"
@@ -43,14 +73,15 @@ sudo ldconfig
    ```bash
    # Check current driver version
    nvidia-smi
-   
+
    # Update driver (Ubuntu/Debian)
    sudo apt-get update
    sudo apt-get install nvidia-driver-550  # or higher
    ```
 
-2. **Use an older CUDA build**:
-   - Download a build with older CUDA version (e.g., 12.4.1 instead of 13.0.0)
+2. **Use the other CUDA version build**:
+   - CUDA 12.9 requires driver >= 575.51.03
+   - CUDA 13.3 requires driver >= 610.43.02
    - See [GPU Compatibility Guide](GPU-COMPATIBILITY.md) for driver requirements
 
 #### "no CUDA-capable device is detected"
@@ -74,7 +105,7 @@ ls -la /dev/nvidia*
    ```bash
    # Check if modules are loaded
    lsmod | grep nvidia
-   
+
    # If not, load them
    sudo modprobe nvidia
    sudo modprobe nvidia_uvm
@@ -84,7 +115,7 @@ ls -la /dev/nvidia*
    ```bash
    # Add user to video group
    sudo usermod -a -G video $USER
-   
+
    # Log out and back in
    ```
 
@@ -158,12 +189,13 @@ nvidia-smi dmon
 
 #### Model runs but performs poorly on newer GPU
 
-**Problem:** You have a new GPU but downloaded wrong CUDA version.
+**Problem:** You have a new GPU but downloaded the wrong CUDA version.
 
 **Solution:**
-- RTX 40 series (8.9): Use any CUDA version
-- H100 (9.0): Use CUDA 12.8+ for best performance
-- Blackwell (10.0): **MUST** use CUDA 12.8 or higher
+- RTX 40 series (8.9): CUDA 13.3
+- H100 (9.0): CUDA 13.3
+- Blackwell (10.0+): CUDA 13.3
+- Pascal (6.x), Volta (7.0): CUDA 12.9
 
 Download the appropriate build from releases.
 
@@ -177,9 +209,9 @@ nvidia-smi --query-gpu=compute_cap --format=csv,noheader
 ```
 
 **Solution:**
-Ensure you downloaded a build that supports your architecture:
-- Compute 7.5, 8.0, 8.6, 8.9, 9.0: Any CUDA version
-- Compute 10.0 (Blackwell): CUDA 12.8+ only
+Download the correct CUDA version build:
+- Pascal (6.x) or Volta (7.0/7.2) → CUDA 12.9
+- Turing (7.5) and newer → CUDA 13.3
 
 ### Server Issues
 
@@ -273,4 +305,4 @@ cat VERSION.txt
 
 - [GPU Compatibility Guide](GPU-COMPATIBILITY.md)
 - [llama.cpp Documentation](https://github.com/ggml-org/llama.cpp/tree/master/docs)
-- [NVIDIA CUDA Troubleshooting](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)
+- [NVIDIA CUDA Installation Guide](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/)

@@ -26,7 +26,7 @@ A clear and concise description of the bug.
 ```
 
 **Build Information:**
-- CUDA Version: [e.g., 12.6.3]
+- CUDA Version: [e.g., 12.9.2]
 - llama.cpp Version: [e.g., b1234]
 - Download Link: [link to release you downloaded]
 

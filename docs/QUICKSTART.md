@@ -4,9 +4,11 @@ Get up and running with llama.cpp CUDA binaries in 5 minutes.
 
 ## Prerequisites
 
-1. NVIDIA GPU (compute capability 7.5 or higher)
-2. NVIDIA driver installed (check with `nvidia-smi`)
-3. Linux x86_64 system (Ubuntu 22.04 or compatible)
+1. NVIDIA GPU (see [GPU compatibility](GPU-COMPATIBILITY.md) for supported architectures)
+2. NVIDIA driver installed (check with `nvidia-smi`):
+   - CUDA 12.9: Driver >= 575.51.03
+   - CUDA 13.3: Driver >= 610.43.02
+3. Linux x86_64 or aarch64 (Ubuntu 24.04 compatible)
 
 ## Step 1: Check Your GPU
 
@@ -14,7 +16,11 @@ Get up and running with llama.cpp CUDA binaries in 5 minutes.
 nvidia-smi --query-gpu=name,compute_cap --format=csv
 ```
 
-This shows your GPU name and compute capability. Make sure it's 7.5 or higher.
+This shows your GPU name and compute capability.
+
+**Choosing the right CUDA version:**
+- Pascal (6.x), Volta (7.0), Tegra (7.2) → **CUDA 12.9**
+- Turing (7.5) and newer → **CUDA 13.3**
 
 ## Step 2: Check Your Driver
 
@@ -22,56 +28,103 @@ This shows your GPU name and compute capability. Make sure it's 7.5 or higher.
 nvidia-smi | grep "Driver Version"
 ```
 
-Compare against [minimum driver versions](GPU-COMPATIBILITY.md#minimum-cuda-driver-versions):
-- CUDA 12.4: Driver >= 550.54
-- CUDA 12.6: Driver >= 560.28  ← **Recommended for most users**
-- CUDA 12.8: Driver >= 570.15
-- CUDA 12.9: Driver >= 580.13
+Compare against minimum requirements:
+- CUDA 12.9: Driver >= 575.51.03
+- CUDA 13.3: Driver >= 610.43.02
 
-**If your driver is too old, download an older CUDA version or update your driver.**
+**If your driver is too old, download the other CUDA version build or update your driver.**
 
 ## Step 3: Download Binaries
 
 1. Go to [Releases](../../releases/latest)
-2. Download the tarball for your CUDA version, e.g.:
+2. Download both tarballs for your CUDA version and CPU architecture:
    ```bash
-   wget https://github.com/ai-dock/llama.cpp-cuda/releases/download/bXXXX/llama.cpp-bXXXX-cuda-12.6.3.tar.gz
+   # amd64 host, CUDA 13.3 (modern GPUs)
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/cuda-runtime-13.3-amd64.tar.gz
+
+   # arm64 host, CUDA 12.9 (legacy GPUs)
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama.cpp-bXXXX-cuda-12.9-arm64.tar.gz
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/cuda-runtime-12.9-arm64.tar.gz
    ```
 
-**Not sure which version?** Use CUDA 12.6.3 for most systems.
+**Not sure which CUDA version?** Most users with Turing+ GPUs should use CUDA 13.3.
+Users with Pascal/Volta GPUs should use CUDA 12.9.
 
 ## Step 4: Extract
 
 ```bash
-tar -xzf llama.cpp-bXXXX-cuda-12.6.3.tar.gz
-cd cuda-12.6.3
+# amd64, CUDA 13.3
+tar -xzf llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
+tar -xzf cuda-runtime-13.3-amd64.tar.gz
+cd cuda-13.3
+
+# arm64, CUDA 12.9
+tar -xzf llama.cpp-bXXXX-cuda-12.9-arm64.tar.gz
+tar -xzf cuda-runtime-12.9-arm64.tar.gz
+cd cuda-12.9
 ```
+
+The CUDA runtime libraries are in the sibling `cuda-runtime-<ver>/` directory and are found automatically by the RPATH embedded in the binaries. No additional CUDA toolkit required — only the NVIDIA driver.
+
+> **Tip:** The CUDA runtime tarball is a one-time download per CUDA version. Reuse it across llama.cpp builds that use the same CUDA version.
 
 ## Step 5: Download a Model
 
-Get a GGUF model (e.g., from [Hugging Face](https://huggingface.co/models?library=gguf)):
+### Option A: via llama-cli (recommended)
+
+Download and run a model directly from Hugging Face:
 
 ```bash
-# Example: Download a 7B model
-wget https://huggingface.co/TheBloke/Llama-2-7B-GGUF/resolve/main/llama-2-7b.Q4_K_M.gguf
+# Downloads and caches the model, then starts inference
+./llama-cli -hf ggml-org/gemma-3-1b-it-GGUF
+```
+
+The `-hf` flag accepts `<user>/<model>[:quant]` format. The model is stored in the
+standard Hugging Face cache directory (`~/.cache/huggingface/`).
+
+### Option B: manual download
+
+Get a GGUF file from [Hugging Face](https://huggingface.co/models?library=gguf):
+
+```bash
+# Download using llama-cli (recommended):
+# ./llama-cli -hf ggml-org/gemma-3-1b-it-GGUF
+# Or manually from Hugging Face: https://huggingface.co/models?library=gguf
 ```
 
 ## Step 6: Run!
 
-### Simple Chat
+### With automatic download (no local file needed)
+
+```bash
+# llama-cli downloads and runs the model in one step
+./llama-cli -hf ggml-org/gemma-3-1b-it-GGUF
+```
+
+### With a local model file
+
 ```bash
 ./llama-cli -m llama-2-7b.Q4_K_M.gguf -p "Hello, how are you?"
 ```
 
 ### Interactive Chat
+
 ```bash
 ./llama-cli -m llama-2-7b.Q4_K_M.gguf --interactive
 ```
 
 ### Start Server
+
 ```bash
 ./llama-server -m llama-2-7b.Q4_K_M.gguf
 # Then visit http://localhost:8080 in your browser
+```
+
+Or serve directly from Hugging Face:
+
+```bash
+./llama-server -hf ggml-org/gemma-3-1b-it-GGUF
 ```
 
 ## Common Options
@@ -118,14 +171,16 @@ ggml_cuda_init: found 1 CUDA devices:
   Device 0: NVIDIA GeForce RTX 3090, compute capability 8.6
 ```
 
-If you see this, CUDA is working! 🎉
+If you see this, CUDA is working!
 
 ## Troubleshooting
 
 ### "CUDA driver version is insufficient"
 Your driver is too old. Either:
-- Update driver: `sudo apt-get install nvidia-driver-XXX`
-- Or download older CUDA build (e.g., 12.4.1)
+- Update driver to match your CUDA version
+- Or download the other CUDA version build:
+  - CUDA 12.9 requires driver >= 575.51.03
+  - CUDA 13.3 requires driver >= 610.43.02
 
 ### "no CUDA-capable device is detected"
 ```bash
@@ -167,4 +222,4 @@ See the [Troubleshooting Guide](TROUBLESHOOTING.md) for detailed solutions.
 - Build issues: [Open an issue](../../issues)
 - llama.cpp questions: [llama.cpp discussions](https://github.com/ggml-org/llama.cpp/discussions)
 
-Happy prompting! 🦙
+Happy prompting!
