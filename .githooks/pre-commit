@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+changed_workflow=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.github/workflows/.*\.ya?ml$' || true)
+changed_sh=$(git diff --cached --name-only --diff-filter=ACMR | grep '\.sh$' || true)
+
+if [ -z "$changed_workflow" ] && [ -z "$changed_sh" ]; then
+    exit 0
+fi
+
+if [ -n "$changed_workflow" ]; then
+    echo "$changed_workflow" | xargs -r actionlint
+fi
+
+if [ -n "$changed_sh" ]; then
+    echo "$changed_sh" | xargs -r shellcheck --shell=bash
+fi

@@ -34,17 +34,17 @@ jobs:
             echo "Release $LATEST_RELEASE already built"
             if [ "${{ github.event.inputs.force_build }}" = "true" ]; then
               echo "Force build enabled, building anyway"
-              echo "should_build=true" >> $GITHUB_OUTPUT
+              echo "should_build=true" >> "$GITHUB_OUTPUT"
             else
-              echo "should_build=false" >> $GITHUB_OUTPUT
+              echo "should_build=false" >> "$GITHUB_OUTPUT"
             fi
           else
             echo "New release detected: $LATEST_RELEASE"
-            echo "should_build=true" >> $GITHUB_OUTPUT
+            echo "should_build=true" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "release_tag=$LATEST_RELEASE" >> $GITHUB_OUTPUT
-          echo "release_hash=$RELEASE_HASH" >> $GITHUB_OUTPUT
+          echo "release_tag=$LATEST_RELEASE" >> "$GITHUB_OUTPUT"
+          echo "release_hash=$RELEASE_HASH" >> "$GITHUB_OUTPUT"
   build:
     needs: check-release
     if: needs.check-release.outputs.should_build == 'true'
@@ -104,7 +104,7 @@ jobs:
           docker pull nvidia/cuda:${{ matrix.cuda.tag }}
 
           docker run --rm \
-            -v $PWD:/workspace \
+            -v "$PWD":/workspace \
             nvidia/cuda:${{ matrix.cuda.tag }} \
             bash -c "
               set -e
@@ -121,6 +121,7 @@ jobs:
                 (git clone https://github.com/ggml-org/llama.cpp.git && cd llama.cpp && git checkout ${{ needs.check-release.outputs.release_hash }})
               cd llama.cpp
 
+              # shellcheck disable=SC2016
               echo '=== Configuring build with Ninja ==='
               export LIBRARY_PATH=\"/usr/local/cuda/lib64/stubs\${LIBRARY_PATH:+:\$LIBRARY_PATH}\"
               ln -sf /usr/local/cuda/lib64/stubs/libcuda.so /usr/local/cuda/lib64/stubs/libcuda.so.1
@@ -164,7 +165,7 @@ jobs:
                 fi
               done
               mkdir -p /workspace/binaries/cuda-runtime-${{ matrix.cuda.short }}
-              sort -u /tmp/cuda_libs.txt | while read lib; do
+              sort -u /tmp/cuda_libs.txt | while read -r lib; do
                 if [ -n \"\$lib\" ] && [ -f \"\$lib\" ]; then
                   cp -v \"\$lib\" /workspace/binaries/cuda-runtime-${{ matrix.cuda.short }}/
                 fi
@@ -187,7 +188,7 @@ jobs:
 
           docker rmi nvidia/cuda:${{ matrix.cuda.tag }} || true
 
-          sudo chown -R $(id -u):$(id -g) $PWD
+          sudo chown -R "$(id -u):$(id -g)" "$PWD"
 
           echo "=== Final disk usage ==="
           df -h
@@ -196,10 +197,10 @@ jobs:
           cd binaries
           tar -czf llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-${{ matrix.cuda.short }}
           tar -czf cuda-runtime-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-runtime-${{ matrix.cuda.short }}
-          ls -lh *.tar.gz
+          ls -lh ./*.tar.gz
       - name: Smoke test
         run: |
-          cd binaries
+          cd binaries || exit 1
           tarball="llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz"
           if [ ! -f "$tarball" ]; then echo "Missing: $tarball"; exit 1; fi
           echo "Tarball: $(stat -c%s "$tarball") bytes"
@@ -211,8 +212,8 @@ jobs:
               echo "Pass: $bin ($(stat -c%s "$bindir/$bin") bytes)"
             fi
           done
-          [ -f "$bindir/VERSION.txt" ] && cat "$bindir/VERSION.txt" || { echo "Missing VERSION.txt"; exit 1; }
-          ldd "$bindir/llama-cli" 2>/dev/null | grep -E "(cuda|cublas|cudart)" | head -3 && echo "Pass: CUDA linkage" || true
+          if [ -f "$bindir/VERSION.txt" ]; then cat "$bindir/VERSION.txt"; else echo "Missing VERSION.txt"; exit 1; fi
+          if ldd "$bindir/llama-cli" 2>/dev/null | grep -E "(cuda|cublas|cudart)" | head -3; then echo "Pass: CUDA linkage"; fi
           if timeout 10 "$bindir/llama-cli" --help >/dev/null 2>&1; then echo "Pass: llama-cli --help"; fi
           rm -rf "$dir"
       - name: Upload artifact
@@ -242,7 +243,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd release-assets
-          sha256sum *.tar.gz > SHA256SUMS
+          sha256sum ./*.tar.gz > SHA256SUMS
           ls -lh SHA256SUMS
 
       - name: Create Release
