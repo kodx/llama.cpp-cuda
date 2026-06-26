@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -52,11 +52,11 @@ CUDA_SHORT="${CUDA_VERSION%.*}"
 
 if [ "$LLAMA_TAG" = "latest" ]; then
     echo -e "${YELLOW}Fetching latest llama.cpp release...${NC}"
-    LLAMA_TAG=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
-    RELEASE_HASH=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.target_commitish')
+    LLAMA_TAG=$(curl -s --fail https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
+    RELEASE_HASH=$(curl -s --fail https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.target_commitish')
     echo "Latest release: $LLAMA_TAG (${RELEASE_HASH:0:8})"
 else
-    RELEASE_HASH=$(curl -s "https://api.github.com/repos/ggml-org/llama.cpp/git/refs/tags/$LLAMA_TAG" | jq -r '.object.sha')
+    RELEASE_HASH=$(curl -s --fail "https://api.github.com/repos/ggml-org/llama.cpp/git/refs/tags/$LLAMA_TAG" | jq -r '.object.sha')
 fi
 
 echo ""

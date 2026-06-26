@@ -24,8 +24,9 @@ jobs:
       - name: Check for new llama.cpp release
         id: check
         run: |
-          LATEST_RELEASE=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
-          RELEASE_HASH=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.target_commitish')
+          set -euo pipefail
+          LATEST_RELEASE=$(curl -s --fail -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.tag_name')
+          RELEASE_HASH=$(curl -s --fail -H "Authorization: Bearer ${{ github.token }}" https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | jq -r '.target_commitish')
 
           echo "Latest llama.cpp release: $LATEST_RELEASE"
           echo "Release hash: $RELEASE_HASH"
