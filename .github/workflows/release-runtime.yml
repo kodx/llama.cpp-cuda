@@ -1,0 +1,74 @@
+name: Release CUDA Runtime
+
+on:
+  workflow_dispatch:
+    inputs:
+      cuda_version:
+        description: 'CUDA version to package'
+        required: true
+        type: choice
+        options:
+          - 13.3.0
+          - 12.9.2
+          - custom
+      custom_cuda_version:
+        description: 'Custom CUDA version (used if "custom" selected above)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Determine versions
+        run: |
+          if [ "$CUDA_VERSION_IN" = "custom" ]; then
+            CUDA_VERSION="$CUSTOM_VERSION"
+          else
+            CUDA_VERSION="$CUDA_VERSION_IN"
+          fi
+          echo "CUDA_VERSION=$CUDA_VERSION" >> "$GITHUB_ENV"
+          echo "CUDA_SHORT=${CUDA_VERSION%.*}" >> "$GITHUB_ENV"
+        env:
+          CUDA_VERSION_IN: ${{ inputs.cuda_version }}
+          CUSTOM_VERSION: ${{ inputs.custom_cuda_version }}
+
+      - name: Download and pack CUDA runtime
+        run: |
+          MANIFEST="redistrib_${CUDA_VERSION}.json"
+          wget "https://developer.download.nvidia.com/compute/cuda/redist/$MANIFEST"
+
+          for arch_pair in "amd64:linux-x86_64" "arm64:linux-aarch64"; do
+            ARCH_NAME="${arch_pair%%:*}"
+            LINUX_ARCH="${arch_pair##*:}"
+
+            mkdir "runtime-${ARCH_NAME}"
+
+            for pkg in cuda_cudart libcublas; do
+              REL=$(jq -r ".$pkg.${LINUX_ARCH}.relative_path" "$MANIFEST")
+              wget "https://developer.download.nvidia.com/compute/cuda/redist/$REL"
+
+              tmpdir=$(mktemp -d)
+              tar -xJf "$(basename "$REL")" -C "$tmpdir"
+              find "$tmpdir" -name '*.so*' -exec cp -L {} "runtime-${ARCH_NAME}/" \;
+              rm -rf "$tmpdir"
+            done
+
+            cd "runtime-${ARCH_NAME}"
+            mkdir -p "../cuda-runtime-${CUDA_SHORT}"
+            cp ./*.so* "../cuda-runtime-${CUDA_SHORT}/"
+            cd ..
+            tar -czf "cuda-runtime-${CUDA_SHORT}-${ARCH_NAME}.tar.gz" "cuda-runtime-${CUDA_SHORT}"
+            rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}" 
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: cuda-runtime-${{ env.CUDA_SHORT }}
+          name: CUDA Runtime ${{ env.CUDA_SHORT }}
+          files: cuda-runtime-*.tar.gz
+          draft: false
+          prerelease: false

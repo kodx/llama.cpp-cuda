@@ -158,19 +158,6 @@ jobs:
 
               find binaries/cuda-${{ matrix.cuda.short }}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
-              echo '=== Bundling CUDA runtime libraries ==='
-              cd /workspace/llama.cpp/build/bin
-              for f in *; do
-                if [ -f \"\$f\" ]; then
-                  ldd \"\$f\" 2>/dev/null | grep /usr/local/cuda | awk '{print \$3}' >> /tmp/cuda_libs.txt
-                fi
-              done
-              mkdir -p /workspace/binaries/cuda-runtime-${{ matrix.cuda.short }}
-              sort -u /tmp/cuda_libs.txt | while read -r lib; do
-                if [ -n \"\$lib\" ] && [ -f \"\$lib\" ]; then
-                  cp -v \"\$lib\" /workspace/binaries/cuda-runtime-${{ matrix.cuda.short }}/
-                fi
-              done
 
               cd /workspace
               echo '=== Creating version info ==='
@@ -197,7 +184,6 @@ jobs:
         run: |
           cd binaries
           tar -czf llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-${{ matrix.cuda.short }}
-          tar -czf cuda-runtime-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-runtime-${{ matrix.cuda.short }}
           ls -lh ./*.tar.gz
       - name: Smoke test
         run: |
@@ -263,14 +249,14 @@ jobs:
             ## Downloads
 
             **CUDA 12.9** (Pascal, Volta — driver 525-575)
-            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-amd64.tar.gz) — [CUDA Runtime 12.9 amd64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-12.9-amd64.tar.gz)
-            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-arm64.tar.gz) — [CUDA Runtime 12.9 arm64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-12.9-arm64.tar.gz)
+            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-amd64.tar.gz) — [CUDA Runtime 12.9 amd64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-amd64.tar.gz)
+            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-arm64.tar.gz) — [CUDA Runtime 12.9 arm64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-arm64.tar.gz)
 
             **CUDA 13.3** (Turing and newer — driver 580+)
-            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-amd64.tar.gz) — [CUDA Runtime 13.3 amd64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-13.3-amd64.tar.gz)
-            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-arm64.tar.gz) — [CUDA Runtime 13.3 arm64](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/cuda-runtime-13.3-arm64.tar.gz)
+            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-amd64.tar.gz) — [CUDA Runtime 13.3 amd64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-amd64.tar.gz)
+            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-arm64.tar.gz) — [CUDA Runtime 13.3 arm64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-arm64.tar.gz)
 
-            > **Note:** CUDA Runtime tarball is needed **only if your system does not have that CUDA version installed**. One-time download, reusable across builds.
+            > **Note:** CUDA Runtime tarballs are published under the `cuda-runtime-*` tag. Download once and reuse across all llama.cpp builds using that CUDA version.
 
             ## Supported GPUs
 
@@ -294,7 +280,7 @@ jobs:
             --jq 'sort_by(.createdAt) | reverse')
           echo "$releases" | jq -r ".[$KEEP_COUNT:] | .[].name" | \
             while read -r release; do
-              if [ -n "$release" ]; then
+              if [ -n "$release" ] && [[ "$release" != cuda-runtime-* ]]; then
                 echo "Deleting old release: $release"
                 gh release delete "$release" --repo "$REPO" --yes
               fi

@@ -121,20 +121,6 @@ docker run --rm -v "$PWD":/workspace \
 
         find binaries/cuda-$CUDA_SHORT/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
-        echo '=> Bundling CUDA runtime libraries...'
-        cd /workspace/llama.cpp/build/bin
-        for f in *; do
-          if [ -f \"\$f\" ]; then
-            ldd \"\$f\" 2>/dev/null | grep /usr/local/cuda | awk '{print \$3}' >> /tmp/cuda_libs.txt
-          fi
-        done
-        mkdir -p /workspace/binaries/cuda-runtime-${CUDA_SHORT}
-        sort -u /tmp/cuda_libs.txt | while read lib; do
-          if [ -n \"\$lib\" ] && [ -f \"\$lib\" ]; then
-            cp -v \"\$lib\" /workspace/binaries/cuda-runtime-${CUDA_SHORT}/
-          fi
-        done
-
         cd /workspace
         echo '=> Creating version info...'
         cat > binaries/cuda-$CUDA_SHORT/VERSION.txt << EOF
@@ -152,7 +138,6 @@ echo ""
 echo -e "${GREEN}Creating tarball...${NC}"
 cd binaries
   tar -czf "llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz" "cuda-$CUDA_SHORT"
-  tar -czf "cuda-runtime-$CUDA_SHORT.tar.gz" "cuda-runtime-$CUDA_SHORT"
 cd ..
 
 echo ""
@@ -160,7 +145,7 @@ echo -e "${GREEN}✓ Build successful!${NC}"
 echo ""
 echo "Binaries location: binaries/cuda-$CUDA_SHORT/"
 echo "Tarball: binaries/llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz"
-echo "CUDA Runtime: binaries/cuda-runtime-$CUDA_SHORT.tar.gz"
+
 echo ""
 echo "Built binaries:"
 ls -lh "binaries/cuda-$CUDA_SHORT/"
