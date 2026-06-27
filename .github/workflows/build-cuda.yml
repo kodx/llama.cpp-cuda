@@ -156,6 +156,7 @@ jobs:
                 find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/cuda-${{ matrix.cuda.short }}/ \; 2>/dev/null || true
               fi
 
+              find binaries/cuda-${{ matrix.cuda.short }}/ -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
               find binaries/cuda-${{ matrix.cuda.short }}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
 
