@@ -15,7 +15,11 @@ for arch_pair in "amd64:linux-x86_64" "arm64:linux-aarch64"; do
 
   for pkg in cuda_cudart libcublas; do
     REL=$(jq -r --arg pkg "$pkg" --arg arch "${LINUX_ARCH}" \
-      '.[$pkg][$arch].relative_path' "$MANIFEST")
+      '.[$pkg][$arch].relative_path // empty' "$MANIFEST")
+    if [ -z "$REL" ]; then
+      REL=$(jq -r --arg pkg "$pkg" --arg arch "linux-sbsa" \
+        '.[$pkg][$arch].relative_path // empty' "$MANIFEST")
+    fi
     echo "Downloading $REL ..."
     wget "https://developer.download.nvidia.com/compute/cuda/redist/$REL"
 

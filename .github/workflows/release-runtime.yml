@@ -1,4 +1,5 @@
 name: Release CUDA Runtime
+run-name: Release CUDA Runtime ${{ inputs.cuda_version }}
 
 on:
   workflow_dispatch:
@@ -49,7 +50,10 @@ jobs:
             mkdir "runtime-${ARCH_NAME}"
 
             for pkg in cuda_cudart libcublas; do
-              REL=$(jq -r --arg pkg "$pkg" --arg arch "${LINUX_ARCH}" '.[$pkg][$arch].relative_path' "$MANIFEST")
+              REL=$(jq -r --arg pkg "$pkg" --arg arch "${LINUX_ARCH}" '.[$pkg][$arch].relative_path // empty' "$MANIFEST")
+              if [ -z "$REL" ]; then
+                REL=$(jq -r --arg pkg "$pkg" --arg arch "linux-sbsa" '.[$pkg][$arch].relative_path // empty' "$MANIFEST")
+              fi
               wget "https://developer.download.nvidia.com/compute/cuda/redist/$REL"
 
               tmpdir=$(mktemp -d)
@@ -71,6 +75,16 @@ jobs:
         with:
           tag_name: cuda-runtime-${{ env.CUDA_SHORT }}
           name: CUDA Runtime ${{ env.CUDA_SHORT }}
+          body: |
+            Standalone CUDA runtime libraries for version ${{ env.CUDA_SHORT }}.
+
+            Includes: \`libcudart.so\`, \`libcublas.so\`, \`libcublasLt.so\`
+
+            **Downloads:**
+            - [cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz) — x86_64
+            - [cuda-runtime-${{ env.CUDA_SHORT }}-arm64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-arm64.tar.gz) — aarch64
+
+            Extract into the same directory as llama.cpp binaries (RPATH is set to \`\$ORIGIN\`).
           files: cuda-runtime-*.tar.gz
           draft: false
           prerelease: false
