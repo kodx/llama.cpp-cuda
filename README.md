@@ -149,7 +149,7 @@ For each upstream llama.cpp release, 4 tarballs are produced:
 
 ### CUDA Runtime
 
-CUDA runtime libraries (`libcudart.so`, `libcublas.so`, `libcublasLt.so`) are distributed as a standalone release per CUDA version. Download once, reuse across all builds.
+CUDA runtime libraries (`libcudart.so`, `libcublas.so`, `libcublasLt.so`, `libnccl.so.2`) are distributed as a standalone release per CUDA version. Download once, reuse across all builds.
 
 | CUDA | amd64 | arm64 |
 |------|-------|-------|

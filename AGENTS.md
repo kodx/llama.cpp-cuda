@@ -7,7 +7,7 @@ Build scripts repo (no application code). Builds [llama.cpp](https://github.com/
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `build-cuda.yml` | Daily 00:00 UTC, manual | Build llama.cpp for CUDA 12.9 + 13.3, amd64 + arm64. Creates release with 4 tarballs. |
-| `release-runtime.yml` | Manual only | Publish CUDA runtime (`libcudart`, `libcublas`, `libcublasLt`) as standalone `cuda-runtime-*` release via NVIDIA CUDA Redist. |
+| `release-runtime.yml` | Manual only | Publish CUDA runtime (`libcudart`, `libcublas`, `libcublasLt`, `libnccl`) as standalone `cuda-runtime-*` release via NVIDIA CUDA Redist + NCCL redist. |
 | `lint.yml` | Push/PR to main | actionlint + shellcheck on workflows and `scripts/*.sh` |
 
 ## Pre-commit hook (`.githooks/pre-commit`)
@@ -19,11 +19,11 @@ Runs `actionlint` on changed `.yml` and `shellcheck --shell=bash` on changed `.s
 ## Commands
 
 ```bash
-# Local test builds (requires CUDA Docker image, ~30 min)
+# Local test builds (requires CUDA Docker image, ~30 min, outputs to binaries/ + archives/)
 ./scripts/test-build.sh 12.9.2
 ./scripts/test-build.sh 13.3.0
 
-# Local test CUDA runtime packaging (downloads ~1GB from NVIDIA Redist)
+# Local test CUDA runtime packaging (downloads ~1.4GB, outputs to binaries/ + archives/)
 ./scripts/test-runtime.sh 12.9.2
 ./scripts/test-runtime.sh 13.3.0
 
@@ -51,3 +51,5 @@ shellcheck --shell=bash scripts/*.sh
 - **`ubuntu-slim`** runner is a valid custom runner.
 - **Cleanup** in `build-cuda.yml` excludes `cuda-runtime-*` releases from deletion.
 - **Smoke test** checks only 3 binaries: `llama-cli`, `llama-server`, `llama-bench`.
+- **NCCL source**: downloaded from `https://developer.download.nvidia.com/compute/redist/nccl/` (separate from CUDA Redist). File pattern: `nccl_<ver>-1+cuda<short>_<arch>.txz` where arch is `x86_64`/`aarch64`. Format `.txz` = tar.xz (`tar -xJf`).
+- **NCCL version**: `2.30.7` supports both CUDA 12.9 and 13.3. Different packages per CUDA version (`+cuda12.9` / `+cuda13.3`) but same NCCL version. ARM arch is always `aarch64` (no `linux-sbsa` distinction).

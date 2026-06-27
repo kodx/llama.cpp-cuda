@@ -7,7 +7,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-if [ -z "$1" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
+if [ -z "${1:-}" ] || [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
   echo "Usage: $0 CUDA_VERSION [LLAMA_TAG]"
   echo ""
   echo "Build llama.cpp with CUDA in a Docker container."
@@ -65,10 +65,10 @@ echo "  Docker Image: nvidia/cuda:$CUDA_TAG"
 echo "  Architectures: $ARCHITECTURES"
 echo ""
 
-mkdir test-build
+mkdir -p binaries archives
 
 echo -e "${GREEN}Starting Docker build...${NC}"
-docker run --rm -v "$PWD/test-build":/workspace \
+docker run --rm -v "$PWD":/workspace \
     nvidia/cuda:$CUDA_TAG \
     bash -c "
         set -e
@@ -136,19 +136,17 @@ EOF
     "
 echo ""
 echo -e "${GREEN}Creating tarball...${NC}"
-cd test-build/binaries
-  tar -czf "../llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz" "cuda-$CUDA_SHORT"
-cd ..
+tar -czf "archives/llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz" -C binaries "cuda-$CUDA_SHORT"
 
 echo ""
 echo -e "${GREEN}✓ Build successful!${NC}"
 echo ""
-echo "Binaries location: test-build/binaries/cuda-$CUDA_SHORT/"
-echo "Tarball: test-build/llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz"
+echo "Binaries location: binaries/cuda-$CUDA_SHORT/"
+echo "Archives location: archives/"
 
 echo ""
 echo "Built binaries:"
-ls -lh "test-build/binaries/cuda-$CUDA_SHORT/"
+ls -lh "binaries/cuda-$CUDA_SHORT/"
 
 
 echo ""

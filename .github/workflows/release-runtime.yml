@@ -62,6 +62,19 @@ jobs:
               rm -rf "$tmpdir"
             done
 
+            # Download NCCL matching CUDA version
+            NCCL_VERSION="2.30.7"
+            case "$ARCH_NAME" in
+              amd64) NCCL_ARCH="x86_64" ;;
+              arm64) NCCL_ARCH="aarch64" ;;
+            esac
+            NCCL_URL="https://developer.download.nvidia.com/compute/redist/nccl/v${NCCL_VERSION}/nccl_${NCCL_VERSION}-1+cuda${CUDA_SHORT}_${NCCL_ARCH}.txz"
+            wget "$NCCL_URL"
+            tmpdir=$(mktemp -d)
+            tar -xJf "$(basename "$NCCL_URL")" -C "$tmpdir"
+            find "$tmpdir" -name '*.so*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
+            rm -rf "$tmpdir"
+
             cd "runtime-${ARCH_NAME}"
             mkdir -p "../cuda-runtime-${CUDA_SHORT}"
             cp -a ./*.so* "../cuda-runtime-${CUDA_SHORT}/"
@@ -85,7 +98,7 @@ jobs:
           body: |
             Standalone CUDA runtime libraries for version ${{ env.CUDA_VERSION }}.
 
-            Includes: \`libcudart.so\`, \`libcublas.so\`, \`libcublasLt.so\`
+            Includes: \`libcudart.so\`, \`libcublas.so\`, \`libcublasLt.so\`, \`libnccl.so.2\`
 
             **Downloads:**
             - [cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz) — x86_64
