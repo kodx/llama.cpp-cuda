@@ -65,18 +65,25 @@ jobs:
             cd "runtime-${ARCH_NAME}"
             mkdir -p "../cuda-runtime-${CUDA_SHORT}"
             cp -a ./*.so* "../cuda-runtime-${CUDA_SHORT}/"
+            cd "../cuda-runtime-${CUDA_SHORT}"
+            for f in *.so.*; do
+              base="${f%.so.*}.so"
+              [ ! -e "$base" ] && ln -s "$f" "$base"
+            done
+            chmod 755 ./*.so*
+            echo "CUDA_VERSION=${CUDA_VERSION}" > VERSION.txt
             cd ..
             tar -czf "cuda-runtime-${CUDA_SHORT}-${ARCH_NAME}.tar.gz" "cuda-runtime-${CUDA_SHORT}"
-            rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}" 
+            rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}"
           done
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           tag_name: cuda-runtime-${{ env.CUDA_SHORT }}
-          name: CUDA Runtime ${{ env.CUDA_SHORT }}
+          name: CUDA Runtime ${{ env.CUDA_VERSION }}
           body: |
-            Standalone CUDA runtime libraries for version ${{ env.CUDA_SHORT }}.
+            Standalone CUDA runtime libraries for version ${{ env.CUDA_VERSION }}.
 
             Includes: \`libcudart.so\`, \`libcublas.so\`, \`libcublasLt.so\`
 

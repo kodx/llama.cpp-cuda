@@ -31,6 +31,14 @@ for arch_pair in "amd64:linux-x86_64" "arm64:linux-aarch64"; do
 
   mkdir -p "cuda-runtime-${CUDA_SHORT}"
   cp -a ./runtime-"${ARCH_NAME}"/*.so* "cuda-runtime-${CUDA_SHORT}/"
+  cd "cuda-runtime-${CUDA_SHORT}"
+  for f in *.so.*; do
+    base="${f%.so.*}.so"
+    [ ! -e "$base" ] && ln -s "$f" "$base"
+  done
+  chmod 755 ./*.so*
+  echo "CUDA_VERSION=${CUDA_VERSION}" > VERSION.txt
+  cd ..
   tar -czf "cuda-runtime-${CUDA_SHORT}-${ARCH_NAME}.tar.gz" "cuda-runtime-${CUDA_SHORT}"
   rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}"
 done
