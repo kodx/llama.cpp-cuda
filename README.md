@@ -77,7 +77,7 @@ Both versions can coexist on the same system as long as your NVIDIA driver meets
 1. Go to the [Releases](../../releases) page
 2. Download the tarball matching your CUDA version and host CPU architecture:
    - `llama.cpp-bXXXX-cuda-<cuda>-<arch>.tar.gz` — llama.cpp binaries and backends
-3. Also download the CUDA Runtime tarball for your CUDA version (one-time download) from the [cuda-runtime-* releases](https://github.com/${{ github.repository }}/releases/tag/cuda-runtime-<cuda>)
+3. Also download the CUDA Runtime tarball for your CUDA version (one-time download) from the [cuda-runtime-* releases](https://github.com/kodx/llama.cpp-cuda/releases)
 4. Extract both archives in the same directory:
 
 ```bash
@@ -153,8 +153,8 @@ CUDA runtime libraries (`libcudart.so`, `libcublas.so`, `libcublasLt.so`) are di
 
 | CUDA | amd64 | arm64 |
 |------|-------|-------|
-| 12.9 | [cuda-runtime-12.9-amd64.tar.gz](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-amd64.tar.gz) | [cuda-runtime-12.9-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-arm64.tar.gz) |
-| 13.3 | [cuda-runtime-13.3-amd64.tar.gz](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-amd64.tar.gz) | [cuda-runtime-13.3-arm64.tar.gz](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-arm64.tar.gz) |
+| 12.9 | [cuda-runtime-12.9-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-amd64.tar.gz) | [cuda-runtime-12.9-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-arm64.tar.gz) |
+| 13.3 | [cuda-runtime-13.3-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-amd64.tar.gz) | [cuda-runtime-13.3-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-arm64.tar.gz) |
 
 Extract into the same directory as the llama.cpp binaries — RPATH is set to `$ORIGIN`, so the loader will find them automatically.
 

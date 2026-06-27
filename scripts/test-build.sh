@@ -65,11 +65,10 @@ echo "  Docker Image: nvidia/cuda:$CUDA_TAG"
 echo "  Architectures: $ARCHITECTURES"
 echo ""
 
-rm -rf binaries test-build
-mkdir -p "binaries/cuda-$CUDA_SHORT"
+mkdir test-build
 
 echo -e "${GREEN}Starting Docker build...${NC}"
-docker run --rm -v "$PWD":/workspace \
+docker run --rm -v "$PWD/test-build":/workspace \
     nvidia/cuda:$CUDA_TAG \
     bash -c "
         set -e
@@ -136,21 +135,20 @@ EOF
     "
 echo ""
 echo -e "${GREEN}Creating tarball...${NC}"
-cd binaries
-  tar -czf "llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz" "cuda-$CUDA_SHORT"
+cd test-build/binaries
+  tar -czf "../llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz" "cuda-$CUDA_SHORT"
 cd ..
 
 echo ""
 echo -e "${GREEN}✓ Build successful!${NC}"
 echo ""
-echo "Binaries location: binaries/cuda-$CUDA_SHORT/"
-echo "Tarball: binaries/llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz"
+echo "Binaries location: test-build/binaries/cuda-$CUDA_SHORT/"
+echo "Tarball: test-build/llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz"
 
 echo ""
 echo "Built binaries:"
-ls -lh "binaries/cuda-$CUDA_SHORT/"
+ls -lh "test-build/binaries/cuda-$CUDA_SHORT/"
 
-rm -rf test-build
 
 echo ""
 echo -e "${GREEN}Test build complete!${NC}"

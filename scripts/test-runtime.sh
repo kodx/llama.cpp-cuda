@@ -25,12 +25,12 @@ for arch_pair in "amd64:linux-x86_64" "arm64:linux-aarch64"; do
 
     tmpdir=$(mktemp -d)
     tar -xJf "$(basename "$REL")" -C "$tmpdir"
-    find "$tmpdir" -name '*.so*' -exec cp -L {} "runtime-${ARCH_NAME}/" \;
+    find "$tmpdir" -name '*.so*' ! -path '*/stubs/*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
     rm -rf "$tmpdir"
   done
 
   mkdir -p "cuda-runtime-${CUDA_SHORT}"
-  cp ./runtime-"${ARCH_NAME}"/*.so* "cuda-runtime-${CUDA_SHORT}/"
+  cp -a ./runtime-"${ARCH_NAME}"/*.so* "cuda-runtime-${CUDA_SHORT}/"
   tar -czf "cuda-runtime-${CUDA_SHORT}-${ARCH_NAME}.tar.gz" "cuda-runtime-${CUDA_SHORT}"
   rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}"
 done

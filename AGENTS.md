@@ -38,6 +38,7 @@ shellcheck --shell=bash scripts/*.sh
 ## Repo quirks & conventions
 
 - **Commit style**: `<prefix>: <short description>` with optional body paragraph (e.g. `ci:`, `feat:`, `fix:`, `docs:`). All text in English.
+- **No commits or pushes without explicit approval.** Always show the commit message first and wait for confirmation (e.g. "apply", "commit", "yes"). Never push unless the user explicitly asks to push.
 - **CUDA Redist manifests**: ARM arch key changed in CUDA 13.x from `linux-aarch64` to `linux-sbsa`. Always use jq fallback:
   ```bash
   REL=$(jq -r --arg pkg "$pkg" --arg arch "$ARCH" '.[$pkg][$arch].relative_path // empty')
