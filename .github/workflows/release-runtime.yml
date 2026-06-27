@@ -18,6 +18,8 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -47,7 +49,7 @@ jobs:
             mkdir "runtime-${ARCH_NAME}"
 
             for pkg in cuda_cudart libcublas; do
-              REL=$(jq -r ".$pkg.${LINUX_ARCH}.relative_path" "$MANIFEST")
+              REL=$(jq -r --arg pkg "$pkg" --arg arch "${LINUX_ARCH}" '.[$pkg][$arch].relative_path' "$MANIFEST")
               wget "https://developer.download.nvidia.com/compute/cuda/redist/$REL"
 
               tmpdir=$(mktemp -d)
