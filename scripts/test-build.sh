@@ -101,8 +101,9 @@ docker run --rm -v "$PWD/test-build":/workspace \
             -DGGML_CPU_ALL_VARIANTS=ON \
             -DLLAMA_BUILD_TESTS=OFF \
             -DLLAMA_BUILD_EXAMPLES=OFF \
-            -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath,\$ORIGIN:\$ORIGIN/../cuda-runtime-${CUDA_SHORT} -Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
-            -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath,\$ORIGIN:\$ORIGIN/../cuda-runtime-${CUDA_SHORT} -Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
+            -DCMAKE_BUILD_RPATH='\$ORIGIN:\$ORIGIN/../cuda-runtime-${CUDA_SHORT}' \
+            -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
+            -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
             -DCMAKE_CUDA_FLAGS=-Wno-deprecated-gpu-targets
 
         echo '=> Building with Ninja (parallel: all cores)...'
