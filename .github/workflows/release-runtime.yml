@@ -32,8 +32,11 @@ jobs:
           else
             CUDA_VERSION="$CUDA_VERSION_IN"
           fi
-          echo "CUDA_VERSION=$CUDA_VERSION" >> "$GITHUB_ENV"
-          echo "CUDA_SHORT=${CUDA_VERSION%.*}" >> "$GITHUB_ENV"
+          {
+            echo "CUDA_VERSION=$CUDA_VERSION"
+            echo "CUDA_SHORT=${CUDA_VERSION%.*}"
+            echo "CUDA_MAJOR=${CUDA_VERSION%%.*}"
+          } >> "$GITHUB_ENV"
         env:
           CUDA_VERSION_IN: ${{ inputs.cuda_version }}
           CUSTOM_VERSION: ${{ inputs.custom_cuda_version }}
@@ -58,7 +61,7 @@ jobs:
 
               tmpdir=$(mktemp -d)
               tar -xJf "$(basename "$REL")" -C "$tmpdir"
-              find "$tmpdir" -name '*.so*' ! -path '*/stubs/*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
+              find "$tmpdir" -name '*.so*' ! -path '*/stubs/*' ! -name 'libnvblas*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
               rm -rf "$tmpdir"
             done
 
@@ -76,9 +79,9 @@ jobs:
             rm -rf "$tmpdir"
 
             cd "runtime-${ARCH_NAME}"
-            mkdir -p "../cuda-runtime-${CUDA_SHORT}"
-            cp -a ./*.so* "../cuda-runtime-${CUDA_SHORT}/"
-            cd "../cuda-runtime-${CUDA_SHORT}"
+            mkdir -p "../llama-cpp-cuda${CUDA_MAJOR}-runtime"
+            cp -a ./*.so* "../llama-cpp-cuda${CUDA_MAJOR}-runtime/"
+            cd "../llama-cpp-cuda${CUDA_MAJOR}-runtime"
             for f in *.so.*; do
               base="${f%.so.*}.so"
               [ ! -e "$base" ] && ln -s "$f" "$base"
@@ -86,19 +89,19 @@ jobs:
             chmod 755 ./*.so*
             echo "CUDA_VERSION=${CUDA_VERSION}" > VERSION.txt
             cd ..
-            tar -czf "cuda-runtime-${CUDA_SHORT}-${ARCH_NAME}.tar.gz" "cuda-runtime-${CUDA_SHORT}"
-            rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}"
+            tar -czf "llama-cpp-cuda${CUDA_MAJOR}-runtime-${ARCH_NAME}.tar.gz" "llama-cpp-cuda${CUDA_MAJOR}-runtime"
+            rm -rf "llama-cpp-cuda${CUDA_MAJOR}-runtime" "runtime-${ARCH_NAME}"
           done
 
 
       - name: Generate checksums
         run: |
-          sha256sum cuda-runtime-*.tar.gz > SHA256SUMS
+          sha256sum llama-cpp-cuda*-runtime-*.tar.gz > SHA256SUMS
           ls -lh SHA256SUMS
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: cuda-runtime-${{ env.CUDA_SHORT }}
+          tag_name: llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime
           name: CUDA Runtime ${{ env.CUDA_VERSION }}
           body: |
             Standalone CUDA runtime libraries for version ${{ env.CUDA_VERSION }}.
@@ -106,12 +109,12 @@ jobs:
             Includes: `libcudart.so`, `libcublas.so`, `libcublasLt.so`, `libnccl.so.2`
 
             **Downloads:**
-            - [cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz) — x86_64
-            - [cuda-runtime-${{ env.CUDA_SHORT }}-arm64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-arm64.tar.gz) — aarch64
+            - [llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-amd64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-amd64.tar.gz) — x86_64
+            - [llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-arm64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-arm64.tar.gz) — aarch64
 
             Extract into the same directory as llama.cpp binaries (RPATH is set to `$ORIGIN`).
           files: |
-            cuda-runtime-*.tar.gz
+            llama-cpp-cuda*-runtime-*.tar.gz
             SHA256SUMS
           draft: false
           prerelease: false

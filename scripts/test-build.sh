@@ -48,7 +48,7 @@ case $CUDA_VERSION in
         ;;
 esac
 
-CUDA_SHORT="${CUDA_VERSION%.*}"
+CUDA_MAJOR="${CUDA_VERSION%%.*}"
 
 if [ "$LLAMA_TAG" = "latest" ]; then
     echo -e "${YELLOW}Fetching latest llama.cpp release...${NC}"
@@ -101,7 +101,8 @@ docker run --rm -v "$PWD":/workspace \
             -DGGML_CPU_ALL_VARIANTS=ON \
             -DLLAMA_BUILD_TESTS=OFF \
             -DLLAMA_BUILD_EXAMPLES=OFF \
-            -DCMAKE_BUILD_RPATH='\$ORIGIN:\$ORIGIN/../cuda-runtime-${CUDA_SHORT}' \
+            -DCMAKE_INSTALL_RPATH='\$ORIGIN:\$ORIGIN/../llama-cpp-cuda${CUDA_MAJOR}-runtime:\$ORIGIN/../lib/llama-cpp-cuda${CUDA_MAJOR}-runtime' \
+            -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
             -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
             -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
             -DCMAKE_CUDA_FLAGS=-Wno-deprecated-gpu-targets
@@ -111,42 +112,43 @@ docker run --rm -v "$PWD":/workspace \
 
         echo '=> Copying binaries...'
         cd /workspace
-        mkdir -p binaries/cuda-$CUDA_SHORT
+        mkdir -p binaries/llama-cpp-cuda${CUDA_MAJOR}
 
-        cp -r llama.cpp/build/bin/* binaries/cuda-$CUDA_SHORT/
+        cp -r llama.cpp/build/bin/* binaries/llama-cpp-cuda${CUDA_MAJOR}/
 
         if [ -d llama.cpp/build/lib ]; then
-          find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/cuda-$CUDA_SHORT/ \; 2>/dev/null || true
+          find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/llama-cpp-cuda${CUDA_MAJOR}/ \; 2>/dev/null || true
         fi
 
-        find binaries/cuda-$CUDA_SHORT/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
+        find binaries/llama-cpp-cuda${CUDA_MAJOR}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
         cd /workspace
         echo '=> Creating version info...'
-        cat > binaries/cuda-$CUDA_SHORT/VERSION.txt << EOF
+        cat > binaries/llama-cpp-cuda${CUDA_MAJOR}/VERSION.txt << EOFBUILD
 llama.cpp version: $LLAMA_TAG
 CUDA version: $CUDA_VERSION
+CUDA major: $CUDA_MAJOR
 Architectures: $ARCHITECTURES
 Build date: \$(date -u +%Y-%m-%d)
 Build hash: $RELEASE_HASH
-EOF
+EOFBUILD
 
         echo '=> Build complete!'
-        ls -lh binaries/cuda-$CUDA_SHORT/
+        ls -lh binaries/llama-cpp-cuda${CUDA_MAJOR}/
     "
 echo ""
 echo -e "${GREEN}Creating tarball...${NC}"
-tar -czf "archives/llama.cpp-$LLAMA_TAG-cuda-$CUDA_SHORT.tar.gz" -C binaries "cuda-$CUDA_SHORT"
+tar -czf "archives/llama-cpp-${LLAMA_TAG}-cuda${CUDA_MAJOR}.tar.gz" -C binaries "llama-cpp-cuda${CUDA_MAJOR}"
 
 echo ""
 echo -e "${GREEN}✓ Build successful!${NC}"
 echo ""
-echo "Binaries location: binaries/cuda-$CUDA_SHORT/"
+echo "Binaries location: binaries/llama-cpp-cuda${CUDA_MAJOR}/"
 echo "Archives location: archives/"
 
 echo ""
 echo "Built binaries:"
-ls -lh "binaries/cuda-$CUDA_SHORT/"
+ls -lh "binaries/llama-cpp-cuda${CUDA_MAJOR}/"
 
 
 echo ""

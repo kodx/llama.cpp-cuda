@@ -5,8 +5,8 @@
 This repository automatically builds [llama.cpp](https://github.com/ggml-org/llama.cpp) with CUDA support for multiple NVIDIA GPU architectures and CUDA versions.
 
 **Changes from original:**
-- Dual CUDA version builds — CUDA 12.9 (legacy GPUs) and CUDA 13.3 (modern GPUs), splitting GPU architectures by version
-- CUDA runtime libraries distributed as a standalone release (one-time download per CUDA version, published under `cuda-runtime-*` tags)
+- Dual CUDA version builds — CUDA 12 (legacy GPUs) and CUDA 13 (modern GPUs), splitting GPU architectures by version
+- CUDA runtime libraries distributed as a standalone release (one-time download per CUDA version, published under `llama-cpp-cuda*-runtime` tags)
 - CPU multi-architecture dispatch via `GGML_CPU_ALL_VARIANTS=ON` (runtime CPU feature detection)
 
 ## Why This Repository?
@@ -24,8 +24,8 @@ The official llama.cpp repository does not provide pre-built CUDA binaries. This
 
 | CUDA | GPU Architectures | Min. Driver |
 |------|------------------|-------------|
-| 12.9 | sm_60, sm_61, sm_62, sm_70, sm_72 | 525-575 |
-| 13.3 | sm_75, sm_80, sm_86, sm_89, sm_90, sm_100, sm_103, sm_110, sm_120, sm_121 | 580+ |
+| 12 | sm_60, sm_61, sm_62, sm_70, sm_72 | 525-575 |
+| 13 | sm_75, sm_80, sm_86, sm_89, sm_90, sm_100, sm_103, sm_110, sm_120, sm_121 | 580+ |
 
 ### Host CPU Architectures
 
@@ -38,7 +38,7 @@ Each release publishes one tarball per combination of CUDA version and host CPU 
 
 ### GPU Architectures
 
-#### CUDA 12.9 (legacy GPUs)
+#### CUDA 12 (legacy GPUs)
 
 | Compute Capability | GPU Examples |
 |-------------------|--------------|
@@ -48,7 +48,7 @@ Each release publishes one tarball per combination of CUDA version and host CPU 
 | 7.0 | Tesla V100 |
 | 7.2 | Tegra Xavier |
 
-#### CUDA 13.3 (modern GPUs)
+#### CUDA 13 (modern GPUs)
 
 | Compute Capability | GPU Examples |
 |-------------------|--------------|
@@ -65,8 +65,8 @@ Each release publishes one tarball per combination of CUDA version and host CPU 
 
 ## Choosing a CUDA Version
 
-- Use **CUDA 12.9** if you have a GPU with compute capability 6.0+ (Pascal, Volta — Tesla P100, GTX 10xx, Tesla V100, etc.). These architectures were removed from CUDA 13.
-- Use **CUDA 13.3** if you have a GPU with compute capability 7.5+ (most modern GPUs from T4 onwards).
+- Use **CUDA 12** if you have a GPU with compute capability 6.0+ (Pascal, Volta — Tesla P100, GTX 10xx, Tesla V100, etc.). These architectures were removed from CUDA 13.
+- Use **CUDA 13** if you have a GPU with compute capability 7.5+ (most modern GPUs from T4 onwards).
 
 Both versions can coexist on the same system as long as your NVIDIA driver meets the minimum requirement for the version you use.
 
@@ -76,25 +76,25 @@ Both versions can coexist on the same system as long as your NVIDIA driver meets
 
 1. Go to the [Releases](../../releases) page
 2. Download the tarball matching your CUDA version and host CPU architecture:
-   - `llama.cpp-bXXXX-cuda-<cuda>-<arch>.tar.gz` — llama.cpp binaries and backends
-3. Also download the CUDA Runtime tarball for your CUDA version (one-time download) from the [cuda-runtime-* releases](https://github.com/kodx/llama.cpp-cuda/releases)
+   - `llama-cpp-bXXXX-cuda<major>-<arch>.tar.gz` — llama.cpp binaries and backends
+3. Also download the CUDA Runtime tarball for your CUDA version (one-time download) from the [llama-cpp-cuda*-runtime releases](https://github.com/kodx/llama.cpp-cuda/releases)
 4. Extract both archives in the same directory:
 
 ```bash
-# amd64 host, CUDA 13.3
-tar -xzf llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
-tar -xzf cuda-runtime-13.3-amd64.tar.gz
-cd cuda-13.3
+# amd64 host, CUDA 13
+tar -xzf llama-cpp-bXXXX-cuda13-amd64.tar.gz
+tar -xzf llama-cpp-cuda13-runtime-amd64.tar.gz
+cd llama-cpp-cuda13
 
-# aarch64 host, CUDA 12.9
-tar -xzf llama.cpp-bXXXX-cuda-12.9-arm64.tar.gz
-tar -xzf cuda-runtime-12.9-arm64.tar.gz
-cd cuda-12.9
+# aarch64 host, CUDA 12
+tar -xzf llama-cpp-bXXXX-cuda12-arm64.tar.gz
+tar -xzf llama-cpp-cuda12-runtime-arm64.tar.gz
+cd llama-cpp-cuda12
 ```
 
 The binaries will automatically find the CUDA runtime libraries in the same directory (RPATH is set to `$ORIGIN`). No CUDA toolkit installation is required — just the NVIDIA driver.
 
-> **Tip:** The CUDA Runtime tarball is a one-time download per CUDA version. It is published under the `cuda-runtime-*` tag and can be reused across all llama.cpp builds using that CUDA version.
+> **Tip:** The CUDA Runtime tarball is a one-time download per CUDA version. It is published under the `llama-cpp-cuda*-runtime` tag and can be reused across all llama.cpp builds using that CUDA version.
 
 ### Run
 
@@ -118,8 +118,8 @@ cat VERSION.txt
 
 - NVIDIA GPU with appropriate compute capability (see table above)
 - NVIDIA driver:
-  - CUDA 12.9: Driver 525-575
-  - CUDA 13.3: Driver 580+
+  - CUDA 12: Driver 525-575
+  - CUDA 13: Driver 580+
 - Linux x86_64 or aarch64 (Ubuntu 24.04 compatible)
 
 ## Build Process
@@ -142,10 +142,10 @@ For each upstream llama.cpp release, 4 tarballs are produced:
 
 | Tarball | Description |
 |---------|-------------|
-| `llama.cpp-bXXXX-cuda-12.9-amd64.tar.gz` | CUDA 12.9 for legacy GPUs on x86_64 |
-| `llama.cpp-bXXXX-cuda-12.9-arm64.tar.gz` | CUDA 12.9 for legacy GPUs on aarch64 |
-| `llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz` | CUDA 13.3 for modern GPUs on x86_64 |
-| `llama.cpp-bXXXX-cuda-13.3-arm64.tar.gz` | CUDA 13.3 for modern GPUs on aarch64 |
+| `llama-cpp-bXXXX-cuda12-amd64.tar.gz` | CUDA 12 for legacy GPUs on x86_64 |
+| `llama-cpp-bXXXX-cuda12-arm64.tar.gz` | CUDA 12 for legacy GPUs on aarch64 |
+| `llama-cpp-bXXXX-cuda13-amd64.tar.gz` | CUDA 13 for modern GPUs on x86_64 |
+| `llama-cpp-bXXXX-cuda13-arm64.tar.gz` | CUDA 13 for modern GPUs on aarch64 |
 
 ### CUDA Runtime
 
@@ -153,8 +153,8 @@ CUDA runtime libraries (`libcudart.so`, `libcublas.so`, `libcublasLt.so`, `libnc
 
 | CUDA | amd64 | arm64 |
 |------|-------|-------|
-| 12.9 | [cuda-runtime-12.9-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-amd64.tar.gz) | [cuda-runtime-12.9-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-arm64.tar.gz) |
-| 13.3 | [cuda-runtime-13.3-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-amd64.tar.gz) | [cuda-runtime-13.3-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-arm64.tar.gz) |
+| 12 | [llama-cpp-cuda12-runtime-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda12-runtime/llama-cpp-cuda12-runtime-amd64.tar.gz) | [llama-cpp-cuda12-runtime-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda12-runtime/llama-cpp-cuda12-runtime-arm64.tar.gz) |
+| 13 | [llama-cpp-cuda13-runtime-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda13-runtime/llama-cpp-cuda13-runtime-amd64.tar.gz) | [llama-cpp-cuda13-runtime-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda13-runtime/llama-cpp-cuda13-runtime-arm64.tar.gz) |
 
 Extract into the same directory as the llama.cpp binaries — RPATH is set to `$ORIGIN`, so the loader will find them automatically.
 

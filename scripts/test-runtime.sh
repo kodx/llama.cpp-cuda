@@ -38,6 +38,7 @@ case $CUDA_VERSION in
 esac
 
 CUDA_SHORT="${CUDA_VERSION%.*}"
+CUDA_MAJOR="${CUDA_VERSION%%.*}"
 ARCH_NAME="amd64"
 LINUX_ARCH="linux-x86_64"
 
@@ -61,7 +62,7 @@ for pkg in cuda_cudart libcublas; do
 
   tmpdir=$(mktemp -d)
   tar -xJf "$(basename "$REL")" -C "$tmpdir"
-  find "$tmpdir" -name '*.so*' ! -path '*/stubs/*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
+  find "$tmpdir" -name '*.so*' ! -path '*/stubs/*' ! -name 'libnvblas*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
   rm -rf "$tmpdir"
 done
 
@@ -75,9 +76,9 @@ tar -xJf "$(basename "$NCCL_URL")" -C "$tmpdir"
 find "$tmpdir" -name '*.so*' -exec cp -a {} "runtime-${ARCH_NAME}/" \;
 rm -rf "$tmpdir"
 
-mkdir -p "cuda-runtime-${CUDA_SHORT}"
-cp -a ./runtime-"${ARCH_NAME}"/*.so* "cuda-runtime-${CUDA_SHORT}/"
-cd "cuda-runtime-${CUDA_SHORT}"
+mkdir -p "llama-cpp-cuda${CUDA_MAJOR}-runtime"
+cp -a ./runtime-"${ARCH_NAME}"/*.so* "llama-cpp-cuda${CUDA_MAJOR}-runtime/"
+cd "llama-cpp-cuda${CUDA_MAJOR}-runtime"
 for f in *.so.*; do
   base="${f%.so.*}.so"
   [ ! -e "$base" ] && ln -s "$f" "$base"
@@ -85,15 +86,15 @@ done
 chmod 755 ./*.so*
 echo "CUDA_VERSION=${CUDA_VERSION}" > VERSION.txt
 cd ..
-tar -czf "../archives/cuda-runtime-${CUDA_SHORT}-${ARCH_NAME}.tar.gz" "cuda-runtime-${CUDA_SHORT}"
-cp -a "cuda-runtime-${CUDA_SHORT}" ../binaries/
-rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}"
+tar -czf "../archives/llama-cpp-cuda${CUDA_MAJOR}-runtime-${ARCH_NAME}.tar.gz" "llama-cpp-cuda${CUDA_MAJOR}-runtime"
+cp -a "llama-cpp-cuda${CUDA_MAJOR}-runtime" ../binaries/
+rm -rf "llama-cpp-cuda${CUDA_MAJOR}-runtime" "runtime-${ARCH_NAME}"
 
 cd ..
 rm -rf downloads
 
 echo ""
 echo -e "${GREEN}✓ CUDA Runtime packaging complete!${NC}"
-echo "Binaries location: binaries/cuda-runtime-${CUDA_SHORT}/"
+echo "Binaries location: binaries/llama-cpp-cuda${CUDA_MAJOR}-runtime/"
 echo "Archives location: archives/"
 ls -lh archives/

@@ -56,10 +56,12 @@ jobs:
         cuda:
           - version: "12.9.2"
             short: "12.9"
+            major: "12"
             architectures: "60;61;62;70;72"
             tag: "12.9.2-cudnn-devel-ubuntu24.04"
           - version: "13.3.0"
             short: "13.3"
+            major: "13"
             architectures: "75;80;86;89;90;100;103;110;120;121"
             tag: "13.3.0-cudnn-devel-ubuntu24.04"
         arch:
@@ -139,7 +141,8 @@ jobs:
                 -DGGML_CPU_ALL_VARIANTS=ON \
                 -DLLAMA_BUILD_TESTS=OFF \
                 -DLLAMA_BUILD_EXAMPLES=OFF \
-                -DCMAKE_BUILD_RPATH='\$ORIGIN:\$ORIGIN/../cuda-runtime-${{ matrix.cuda.short }}' \
+                -DCMAKE_INSTALL_RPATH='\$ORIGIN:\$ORIGIN/../llama-cpp-cuda${{ matrix.cuda.major }}-runtime:\$ORIGIN/../lib/llama-cpp-cuda${{ matrix.cuda.major }}-runtime' \
+                -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
                 -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
                 -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
                 -DCMAKE_CUDA_FLAGS=-Wno-deprecated-gpu-targets
@@ -149,28 +152,29 @@ jobs:
 
               echo '=== Copying binaries ==='
               cd /workspace
-              mkdir -p binaries/cuda-${{ matrix.cuda.short }}
+              mkdir -p binaries/llama-cpp-cuda${{ matrix.cuda.major }}
 
-              cp -r llama.cpp/build/bin/* binaries/cuda-${{ matrix.cuda.short }}/
+              cp -r llama.cpp/build/bin/* binaries/llama-cpp-cuda${{ matrix.cuda.major }}/
 
               if [ -d llama.cpp/build/lib ]; then
-                find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/cuda-${{ matrix.cuda.short }}/ \; 2>/dev/null || true
+                find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ \; 2>/dev/null || true
               fi
 
-              find binaries/cuda-${{ matrix.cuda.short }}/ -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
-              find binaries/cuda-${{ matrix.cuda.short }}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
+              find binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
+              find binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
 
               cd /workspace
               echo '=== Creating version info ==='
-              echo 'llama.cpp version: ${{ needs.check-release.outputs.release_tag }}' > binaries/cuda-${{ matrix.cuda.short }}/VERSION.txt
-              echo 'CUDA version: ${{ matrix.cuda.version }}' >> binaries/cuda-${{ matrix.cuda.short }}/VERSION.txt
-              echo 'Architectures: ${{ matrix.cuda.architectures }}' >> binaries/cuda-${{ matrix.cuda.short }}/VERSION.txt
-              echo 'Build date: '\$(date -u +%Y-%m-%d) >> binaries/cuda-${{ matrix.cuda.short }}/VERSION.txt
-              echo 'Build hash: ${{ needs.check-release.outputs.release_hash }}' >> binaries/cuda-${{ matrix.cuda.short }}/VERSION.txt
+              echo 'llama.cpp version: ${{ needs.check-release.outputs.release_tag }}' > binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
+              echo 'CUDA version: ${{ matrix.cuda.version }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
+              echo 'CUDA major: ${{ matrix.cuda.major }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
+              echo 'Architectures: ${{ matrix.cuda.architectures }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
+              echo 'Build date: '\$(date -u +%Y-%m-%d) >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
+              echo 'Build hash: ${{ needs.check-release.outputs.release_hash }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
 
               echo '=== Build complete ==='
-              ls -lh binaries/cuda-${{ matrix.cuda.short }}/
+              ls -lh binaries/llama-cpp-cuda${{ matrix.cuda.major }}/
 
               echo '=== Cleaning up build directory ==='
               rm -rf llama.cpp
@@ -185,17 +189,17 @@ jobs:
       - name: Create tarball
         run: |
           cd binaries
-          tar -czf llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz cuda-${{ matrix.cuda.short }}
+          tar -czf llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda${{ matrix.cuda.major }}-${{ matrix.arch.name }}.tar.gz llama-cpp-cuda${{ matrix.cuda.major }}
           ls -lh ./*.tar.gz
       - name: Smoke test
         run: |
           cd binaries || exit 1
-          tarball="llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-${{ matrix.cuda.short }}-${{ matrix.arch.name }}.tar.gz"
+          tarball="llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda${{ matrix.cuda.major }}-${{ matrix.arch.name }}.tar.gz"
           if [ ! -f "$tarball" ]; then echo "Missing: $tarball"; exit 1; fi
           echo "Tarball: $(stat -c%s "$tarball") bytes"
           dir="smoke"
           mkdir -p "$dir" && tar -xzf "$tarball" -C "$dir"
-          bindir="$dir/cuda-${{ matrix.cuda.short }}"
+          bindir="$dir/llama-cpp-cuda${{ matrix.cuda.major }}"
           for bin in llama-cli llama-server llama-bench; do
             if [ -f "$bindir/$bin" ] && [ -s "$bindir/$bin" ]; then
               echo "Pass: $bin ($(stat -c%s "$bindir/$bin") bytes)"
@@ -250,22 +254,22 @@ jobs:
 
             ## Downloads
 
-            **CUDA 12.9** (Pascal, Volta — driver 525-575)
-            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-amd64.tar.gz) — [CUDA Runtime 12.9 amd64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-amd64.tar.gz)
-            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-12.9-arm64.tar.gz) — [CUDA Runtime 12.9 arm64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-12.9/cuda-runtime-12.9-arm64.tar.gz)
+            **CUDA 12** (Pascal, Volta — driver 525-575)
+            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda12-amd64.tar.gz) — [CUDA Runtime 12 amd64](https://github.com/${{ github.repository }}/releases/download/llama-cpp-cuda12-runtime/llama-cpp-cuda12-runtime-amd64.tar.gz)
+            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda12-arm64.tar.gz) — [CUDA Runtime 12 arm64](https://github.com/${{ github.repository }}/releases/download/llama-cpp-cuda12-runtime/llama-cpp-cuda12-runtime-arm64.tar.gz)
 
-            **CUDA 13.3** (Turing and newer — driver 580+)
-            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-amd64.tar.gz) — [CUDA Runtime 13.3 amd64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-amd64.tar.gz)
-            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama.cpp-${{ needs.check-release.outputs.release_tag }}-cuda-13.3-arm64.tar.gz) — [CUDA Runtime 13.3 arm64](https://github.com/${{ github.repository }}/releases/download/cuda-runtime-13.3/cuda-runtime-13.3-arm64.tar.gz)
+            **CUDA 13** (Turing and newer — driver 580+)
+            - [Linux x64 (amd64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda13-amd64.tar.gz) — [CUDA Runtime 13 amd64](https://github.com/${{ github.repository }}/releases/download/llama-cpp-cuda13-runtime/llama-cpp-cuda13-runtime-amd64.tar.gz)
+            - [Linux arm64 (aarch64)](https://github.com/${{ github.repository }}/releases/download/${{ needs.check-release.outputs.release_tag }}/llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda13-arm64.tar.gz) — [CUDA Runtime 13 arm64](https://github.com/${{ github.repository }}/releases/download/llama-cpp-cuda13-runtime/llama-cpp-cuda13-runtime-arm64.tar.gz)
 
-            > **Note:** CUDA Runtime tarballs are published under the `cuda-runtime-*` tag. Download once and reuse across all llama.cpp builds using that CUDA version.
+            > **Note:** CUDA Runtime tarballs are published under the `llama-cpp-cuda*-runtime` tag. Download once and reuse across all llama.cpp builds using that CUDA version.
 
             ## Supported GPUs
 
             | CUDA | Architectures | GPU families | Min. Driver |
             |------|--------------|--------------|-------------|
-            | 12.9 | sm_60–sm_72 | Pascal (P100, GTX 10xx), Volta (V100) | 525-575 |
-            | 13.3 | sm_75–sm_121 | Turing (RTX 20xx), Ampere (RTX 30xx, A100) and newer | 580+ |
+            | 12 | sm_60–sm_72 | Pascal (P100, GTX 10xx), Volta (V100) | 525-575 |
+            | 13 | sm_75–sm_121 | Turing (RTX 20xx), Ampere (RTX 30xx, A100) and newer | 580+ |
 
             Full docs: [README](https://github.com/${{ github.repository }})
           files: release-assets/*
@@ -282,7 +286,7 @@ jobs:
             --jq 'sort_by(.createdAt) | reverse')
           echo "$releases" | jq -r ".[$KEEP_COUNT:] | .[].name" | \
             while read -r release; do
-              if [ -n "$release" ] && [[ "$release" != cuda-runtime-* ]]; then
+              if [ -n "$release" ] && [[ "$release" != llama-cpp-cuda*-runtime ]]; then
                 echo "Deleting old release: $release"
                 gh release delete "$release" --repo "$REPO" --yes
               fi
