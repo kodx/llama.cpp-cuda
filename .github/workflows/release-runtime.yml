@@ -90,6 +90,11 @@ jobs:
             rm -rf "cuda-runtime-${CUDA_SHORT}" "runtime-${ARCH_NAME}"
           done
 
+
+      - name: Generate checksums
+        run: |
+          sha256sum cuda-runtime-*.tar.gz > SHA256SUMS
+          ls -lh SHA256SUMS
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
@@ -98,13 +103,15 @@ jobs:
           body: |
             Standalone CUDA runtime libraries for version ${{ env.CUDA_VERSION }}.
 
-            Includes: \`libcudart.so\`, \`libcublas.so\`, \`libcublasLt.so\`, \`libnccl.so.2\`
+            Includes: `libcudart.so`, `libcublas.so`, `libcublasLt.so`, `libnccl.so.2`
 
             **Downloads:**
             - [cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-amd64.tar.gz) — x86_64
             - [cuda-runtime-${{ env.CUDA_SHORT }}-arm64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/cuda-runtime-${{ env.CUDA_SHORT }}/cuda-runtime-${{ env.CUDA_SHORT }}-arm64.tar.gz) — aarch64
 
-            Extract into the same directory as llama.cpp binaries (RPATH is set to \`\$ORIGIN\`).
-          files: cuda-runtime-*.tar.gz
+            Extract into the same directory as llama.cpp binaries (RPATH is set to `$ORIGIN`).
+          files: |
+            cuda-runtime-*.tar.gz
+            SHA256SUMS
           draft: false
           prerelease: false
