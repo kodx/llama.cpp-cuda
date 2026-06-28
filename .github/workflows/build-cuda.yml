@@ -288,6 +288,6 @@ jobs:
             while read -r release; do
               if [ -n "$release" ] && [[ "$release" != llama-cpp-cuda*-runtime ]]; then
                 echo "Deleting old release: $release"
-                gh release delete "$release" --repo "$REPO" --yes
+                gh release delete "$release" --repo "$REPO" --yes --cleanup-tag
               fi
             done
