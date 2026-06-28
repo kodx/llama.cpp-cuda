@@ -46,7 +46,7 @@ shellcheck --shell=bash scripts/*.sh
   ```
 - **jq + hyphens**: Always use `--arg` + bracket notation (`.[$key]`) instead of dot notation (`.key`) when keys contain hyphens like `linux-x86_64`.
 - **`run-name:`** in `release-runtime.yml` displays CUDA version in Actions UI.
-- **RPATH** is `$ORIGIN:$ORIGIN/../llama-cpp-cuda$SHORT-runtime`. CUDA runtime tarballs are extracted alongside or as sibling to `llama-cpp-cuda$SHORT/` directory.
+- **RUNPATH** is `$ORIGIN:$ORIGIN/../llama-cpp-cuda$SHORT-runtime`. CUDA runtime tarballs are extracted alongside or as sibling to `llama-cpp-cuda$SHORT/` directory.
 - **`.gitignore`** intentionally broad: `binaries/`, `artifacts/`, `*.tar.gz`.
 - **`ubuntu-slim`** runner is a valid custom runner.
 - **Cleanup** in `build-cuda.yml` excludes `llama-cpp-cuda*-runtime` releases from deletion.

@@ -112,7 +112,7 @@ jobs:
             - [llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-amd64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-amd64.tar.gz) — x86_64
             - [llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-arm64.tar.gz](${{ github.server_url }}/${{ github.repository }}/releases/download/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime/llama-cpp-cuda${{ env.CUDA_MAJOR }}-runtime-arm64.tar.gz) — aarch64
 
-            Extract into the same directory as llama.cpp binaries (RPATH is set to `$ORIGIN`).
+            Extract into the same directory as llama.cpp binaries (RUNPATH is set to `$ORIGIN`).
           files: |
             llama-cpp-cuda*-runtime-*.tar.gz
             SHA256SUMS
