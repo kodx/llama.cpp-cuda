@@ -92,7 +92,7 @@ tar -xzf llama-cpp-cuda12-runtime-arm64.tar.gz
 cd llama-cpp-cuda12
 ```
 
-The binaries will automatically find the CUDA runtime libraries in the same directory (RUNPATH is set to `$ORIGIN`). No CUDA toolkit installation is required — just the NVIDIA driver.
+No CUDA toolkit installation is required — just the NVIDIA driver. The binaries will discover the runtime libraries automatically via RUNPATH.
 
 > **Tip:** The CUDA Runtime tarball is a one-time download per CUDA version. It is published under the `llama-cpp-cuda*-runtime` tag and can be reused across all llama.cpp builds using that CUDA version.
 
@@ -156,7 +156,7 @@ CUDA runtime libraries (`libcudart.so`, `libcublas.so`, `libcublasLt.so`, `libnc
 | 12 | [llama-cpp-cuda12-runtime-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda12-runtime/llama-cpp-cuda12-runtime-amd64.tar.gz) | [llama-cpp-cuda12-runtime-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda12-runtime/llama-cpp-cuda12-runtime-arm64.tar.gz) |
 | 13 | [llama-cpp-cuda13-runtime-amd64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda13-runtime/llama-cpp-cuda13-runtime-amd64.tar.gz) | [llama-cpp-cuda13-runtime-arm64.tar.gz](https://github.com/kodx/llama.cpp-cuda/releases/download/llama-cpp-cuda13-runtime/llama-cpp-cuda13-runtime-arm64.tar.gz) |
 
-Extract into the same directory as the llama.cpp binaries — RUNPATH is set to `$ORIGIN`, so the loader will find them automatically.
+Extract alongside the llama.cpp tarball — RUNPATH locates the runtime libraries automatically.
 
 ## CPU Optimization
 
