@@ -243,9 +243,8 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.check-release.outputs.release_tag }}
-          name: llama.cpp ${{ needs.check-release.outputs.release_tag }} with CUDA
+          name: llama.cpp ${{ needs.check-release.outputs.release_tag }} with CUDA Support
           body: |
-            # llama.cpp ${{ needs.check-release.outputs.release_tag }} with CUDA Support
 
             Pre-built binaries of llama.cpp with CUDA support.
 
