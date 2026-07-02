@@ -283,10 +283,10 @@ jobs:
           REPO=${{ github.repository }}
           releases=$(gh release list --repo "$REPO" --limit 100 \
             --json tagName,createdAt \
-            --jq 'sort_by(.createdAt) | reverse')
+            --jq '[.[] | select(.tagName | test("-runtime$") | not)] | sort_by(.createdAt) | reverse')
           echo "$releases" | jq -r ".[$KEEP_COUNT:] | .[].tagName" | \
             while read -r release; do
-              if [ -n "$release" ] && [[ "$release" != llama-cpp-cuda*-runtime ]]; then
+              if [ -n "$release" ] ; then
                 echo "Deleting old release: $release"
                 gh release delete "$release" --repo "$REPO" --yes --cleanup-tag
               fi
