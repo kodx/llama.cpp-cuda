@@ -1,4 +1,4 @@
-name: Build llama.cpp with CUDA
+name: Build llama.cpp with CUDA support
 on:
   schedule:
     - cron: '0 0 * * *'
