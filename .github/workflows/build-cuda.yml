@@ -278,6 +278,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           KEEP_COUNT: 5
+          CURRENT_TAG: ${{ needs.check-release.outputs.release_tag }}
         run: |
           REPO=${{ github.repository }}
           releases=$(gh release list --repo "$REPO" --limit 100 \
@@ -285,7 +286,7 @@ jobs:
             --jq '[.[] | select(.tagName | test("-runtime$") | not)] | sort_by(.createdAt) | reverse')
           echo "$releases" | jq -r ".[$KEEP_COUNT:] | .[].tagName" | \
             while read -r release; do
-              if [ -n "$release" ] ; then
+              if [ -n "$release" ] && [ "$release" != "$CURRENT_TAG" ]; then
                 echo "Deleting old release: $release"
                 gh release delete "$release" --repo "$REPO" --yes --cleanup-tag
               fi
