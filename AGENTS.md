@@ -6,8 +6,8 @@ Build scripts repo (no application code). Builds [llama.cpp](https://github.com/
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `build-cuda.yml` | Daily 00:00 UTC, manual | Build llama.cpp for CUDA 12.9 + 13.3, amd64 + arm64. Creates release with 4 tarballs. |
-| `release-runtime.yml` | Manual only | Publish CUDA runtime (`libcudart`, `libcublas`, `libcublasLt`, `libnccl`) as standalone `llama-cpp-cuda*-runtime` release via NVIDIA CUDA Redist + NCCL redist. |
+| `build.yml` | Daily 00:00 UTC, manual | Build llama.cpp for CUDA 12.9 + 13.3, amd64 + arm64. Creates release with 4 tarballs. |
+| `runtime.yml` | Manual only | Publish CUDA runtime (`libcudart`, `libcublas`, `libcublasLt`, `libnccl`) as standalone `llama-cpp-cuda*-runtime` release via NVIDIA CUDA Redist + NCCL redist. |
 | `lint.yml` | Push/PR to main | actionlint + shellcheck on workflows and `scripts/*.sh` |
 
 ## Pre-commit hook (`.githooks/pre-commit`)
@@ -45,11 +45,11 @@ shellcheck --shell=bash scripts/*.sh
   [ -z "$REL" ] && REL=$(jq -r --arg pkg "$pkg" --arg arch "linux-sbsa" '.[$pkg][$arch].relative_path // empty')
   ```
 - **jq + hyphens**: Always use `--arg` + bracket notation (`.[$key]`) instead of dot notation (`.key`) when keys contain hyphens like `linux-x86_64`.
-- **`run-name:`** in `release-runtime.yml` displays CUDA version in Actions UI.
+- **`run-name:`** in `runtime.yml` displays CUDA version in Actions UI.
 - **RUNPATH** is `$ORIGIN:$ORIGIN/../llama-cpp-cuda$SHORT-runtime`. CUDA runtime tarballs are extracted alongside or as sibling to `llama-cpp-cuda$SHORT/` directory.
 - **`.gitignore`** intentionally broad: `binaries/`, `artifacts/`, `*.tar.gz`.
 - **`ubuntu-slim`** runner is a valid custom runner.
-- **Cleanup** in `build-cuda.yml` excludes `llama-cpp-cuda*-runtime` releases from deletion.
+- **Cleanup** in `build.yml` excludes `llama-cpp-cuda*-runtime` releases from deletion.
 - **Smoke test** checks only 3 binaries: `llama-cli`, `llama-server`, `llama-bench`.
 - **NCCL source**: downloaded from `https://developer.download.nvidia.com/compute/redist/nccl/` (separate from CUDA Redist). File pattern: `nccl_<ver>-1+cuda<short>_<arch>.txz` where arch is `x86_64`/`aarch64`. Format `.txz` = tar.xz (`tar -xJf`).
 - **NCCL version**: `2.30.7` supports both CUDA 12.9 and 13.3. Different packages per CUDA version (`+cuda12.9` / `+cuda13.3`) but same NCCL version. ARM arch is always `aarch64` (no `linux-sbsa` distinction).

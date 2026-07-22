@@ -274,6 +274,9 @@ jobs:
           files: release-assets/*
           draft: false
           prerelease: false
+      - name: Wait for release propagation
+        run: sleep 30
+
       - name: Delete old releases
         env:
           GH_TOKEN: ${{ github.token }}
@@ -281,13 +284,19 @@ jobs:
           CURRENT_TAG: ${{ needs.check-release.outputs.release_tag }}
         run: |
           REPO=${{ github.repository }}
-          releases=$(gh release list --repo "$REPO" --limit 100 \
-            --json tagName,createdAt \
-            --jq '[.[] | select(.tagName | test("-runtime$") | not)] | sort_by(.createdAt) | reverse')
+
+          releases=$(gh release list --repo "$REPO" --limit 100             --json tagName,createdAt             --jq '[.[] | select(.tagName | test("-runtime$") | not)] | sort_by(.createdAt) | reverse')
+
+          echo "=== Non-runtime releases (newest first) ==="
+          echo "$releases" | jq -r 'to_entries[] | "  [\(.key)] \(.value.tagName)  created=\(.value.createdAt)"'
+          echo ""
+          echo "Total: $(echo "$releases" | jq 'length'), keeping $KEEP_COUNT newest"
+
           echo "$releases" | jq -r ".[$KEEP_COUNT:] | .[].tagName" | \
             while read -r release; do
               if [ -n "$release" ] && [ "$release" != "$CURRENT_TAG" ]; then
-                echo "Deleting old release: $release"
+                echo "Deleting: $release"
                 gh release delete "$release" --repo "$REPO" --yes --cleanup-tag
               fi
             done
+
