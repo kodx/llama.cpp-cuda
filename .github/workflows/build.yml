@@ -163,7 +163,6 @@ jobs:
               find binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
               find binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
-
               cd /workspace
               echo '=== Creating version info ==='
               echo 'llama.cpp version: ${{ needs.check-release.outputs.release_tag }}' > binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
@@ -224,6 +223,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -238,6 +239,17 @@ jobs:
           cd release-assets
           sha256sum ./*.tar.gz > SHA256SUMS
           ls -lh SHA256SUMS
+
+      - name: Create advancing release tag
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.check-release.outputs.release_tag }}"
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty \
+            -m "llama.cpp ${TAG} (CUDA build $(date -u +%Y-%m-%dT%H:%M:%SZ))"
+          git tag "${TAG}"
+          git push origin "refs/tags/${TAG}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
