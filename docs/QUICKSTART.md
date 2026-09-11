@@ -6,8 +6,8 @@ Get up and running with llama.cpp CUDA binaries in 5 minutes.
 
 1. NVIDIA GPU (see [GPU compatibility](GPU-COMPATIBILITY.md) for supported architectures)
 2. NVIDIA driver installed (check with `nvidia-smi`):
-   - CUDA 12.9: Driver 525-575
-   - CUDA 13.3: Driver 580+
+   - CUDA 12: Driver 525-575
+   - CUDA 13: Driver 580+
 3. Linux x86_64 or aarch64 (Ubuntu 24.04 compatible)
 
 ## Step 1: Check Your GPU
@@ -19,8 +19,8 @@ nvidia-smi --query-gpu=name,compute_cap --format=csv
 This shows your GPU name and compute capability.
 
 **Choosing the right CUDA version:**
-- Pascal (6.x), Volta (7.0), Tegra (7.2) → **CUDA 12.9**
-- Turing (7.5) and newer → **CUDA 13.3**
+- Pascal (6.x), Volta (7.0), Tegra (7.2) → **CUDA 12**
+- Turing (7.5) and newer → **CUDA 13**
 
 ## Step 2: Check Your Driver
 
@@ -29,8 +29,8 @@ nvidia-smi | grep "Driver Version"
 ```
 
 Compare against minimum requirements:
-- CUDA 12.9: Driver 525-575
-- CUDA 13.3: Driver 580+
+- CUDA 12: Driver 525-575
+- CUDA 13: Driver 580+
 
 **If your driver is too old, download the other CUDA version build or update your driver.**
 
@@ -39,33 +39,33 @@ Compare against minimum requirements:
 1. Go to [Releases](../../releases/latest)
 2. Download both tarballs for your CUDA version and CPU architecture:
    ```bash
-   # amd64 host, CUDA 13.3 (modern GPUs)
-   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
-   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/cuda-runtime-13.3-amd64.tar.gz
+   # amd64 host, CUDA 13 (modern GPUs)
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama-cpp-bXXXX-cuda13-amd64.tar.gz
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama-cpp-cuda13-runtime-amd64.tar.gz
 
-   # arm64 host, CUDA 12.9 (legacy GPUs)
-   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama.cpp-bXXXX-cuda-12.9-arm64.tar.gz
-   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/cuda-runtime-12.9-arm64.tar.gz
+   # arm64 host, CUDA 12 (legacy GPUs)
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama-cpp-bXXXX-cuda12-arm64.tar.gz
+   wget https://github.com/kodx/llama.cpp-cuda/releases/download/bXXXX/llama-cpp-cuda12-runtime-arm64.tar.gz
    ```
 
-**Not sure which CUDA version?** Most users with Turing+ GPUs should use CUDA 13.3.
-Users with Pascal/Volta GPUs should use CUDA 12.9.
+**Not sure which CUDA version?** Most users with Turing+ GPUs should use CUDA 13.
+Users with Pascal/Volta GPUs should use CUDA 12.
 
 ## Step 4: Extract
 
 ```bash
-# amd64, CUDA 13.3
-tar -xzf llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
-tar -xzf cuda-runtime-13.3-amd64.tar.gz
-cd cuda-13.3
+# amd64, CUDA 13
+tar -xzf llama-cpp-bXXXX-cuda13-amd64.tar.gz
+tar -xzf llama-cpp-cuda13-runtime-amd64.tar.gz
+cd llama-cpp-cuda13
 
-# arm64, CUDA 12.9
-tar -xzf llama.cpp-bXXXX-cuda-12.9-arm64.tar.gz
-tar -xzf cuda-runtime-12.9-arm64.tar.gz
-cd cuda-12.9
+# arm64, CUDA 12
+tar -xzf llama-cpp-bXXXX-cuda12-arm64.tar.gz
+tar -xzf llama-cpp-cuda12-runtime-arm64.tar.gz
+cd llama-cpp-cuda12
 ```
 
-The CUDA runtime libraries are in the sibling `cuda-runtime-<ver>/` directory and are found automatically by the RPATH embedded in the binaries. No additional CUDA toolkit required — only the NVIDIA driver.
+The CUDA runtime libraries are in the sibling `llama-cpp-cuda<major>-runtime/` directory and are found automatically by the RUNPATH embedded in the binaries. No additional CUDA toolkit required — only the NVIDIA driver.
 
 > **Tip:** The CUDA runtime tarball is a one-time download per CUDA version. Reuse it across llama.cpp builds that use the same CUDA version.
 
@@ -179,8 +179,8 @@ If you see this, CUDA is working!
 Your driver is too old. Either:
 - Update driver to match your CUDA version
 - Or download the other CUDA version build:
-  - CUDA 12.9 requires driver 525-575
-  - CUDA 13.3 requires driver 580+
+  - CUDA 12 requires driver 525-575
+  - CUDA 13 requires driver 580+
 
 ### "no CUDA-capable device is detected"
 ```bash

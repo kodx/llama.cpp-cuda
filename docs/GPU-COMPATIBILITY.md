@@ -23,7 +23,7 @@ if torch.cuda.is_available():
 
 ## Compute Capability Breakdown
 
-### CUDA 12.9 (legacy — Pascal, Volta)
+### CUDA 12 (legacy — Pascal, Volta)
 
 Minimum driver: Linux **525-575**
 
@@ -34,7 +34,7 @@ Minimum driver: Linux **525-575**
 | 7.0 | Volta | Tesla V100, Titan V |
 | 7.2 | Tegra | Xavier |
 
-### CUDA 13.3 (modern — Turing and newer)
+### CUDA 13 (modern — Turing and newer)
 
 Minimum driver: Linux **580+**
 
@@ -63,7 +63,7 @@ cat /proc/driver/nvidia/version
 
 ## CUDA Compatibility Matrix
 
-| GPU Architecture | Compute Cap. | CUDA 12.9 | CUDA 13.3 |
+| GPU Architecture | Compute Cap. | CUDA 12 | CUDA 13 |
 |-----------------|--------------|-----------|-----------|
 | Pascal (DC)     | 6.0          | ✅        | ❌        |
 | Pascal          | 6.1 / 6.2    | ✅        | ❌        |
@@ -82,24 +82,24 @@ cat /proc/driver/nvidia/version
 ## Recommendations by Use Case
 
 ### Legacy GPUs (Pascal, Volta — GTX 10xx, Tesla P100, V100)
-**Use:** CUDA 12.9
+**Use:** CUDA 12
 - These architectures were removed from CUDA 13
 - Requires driver 525-575
 - Builds available for both amd64 and arm64
 
 ### Modern GPUs (Turing and newer — RTX 20/30/40/50 series, A100, H100, B200)
-**Use:** CUDA 13.3
+**Use:** CUDA 13
 - Full support for all modern architectures
 - Requires driver 580+
 - Latest CUDA optimizations
 
 ### Latest Hardware (Blackwell GB300, DGX Spark)
-**Use:** CUDA 13.3
+**Use:** CUDA 13
 - Required for sm_103, sm_110, sm_120, sm_121 support
 - Latest Blackwell optimizations
 
 ### Data Center (A100, H100, B200)
-**Use:** CUDA 13.3
+**Use:** CUDA 13
 - Best performance for data center GPUs
 - Support for latest Hopper and Blackwell features
 
@@ -108,8 +108,8 @@ cat /proc/driver/nvidia/version
 ### "CUDA driver version is insufficient"
 - Update your NVIDIA driver to meet minimum requirements
 - Or download the other CUDA version build:
-  - Use CUDA 12.9 if your driver is 525-575
-  - Use CUDA 13.3 if your driver is 580+
+  - Use CUDA 12 if your driver is 525-575
+  - Use CUDA 13 if your driver is 580+
 - See the table above for exact minimum versions
 
 ### "No CUDA-capable device detected"
@@ -119,8 +119,8 @@ cat /proc/driver/nvidia/version
 
 ### Performance issues
 - Ensure correct CUDA version for your GPU architecture
-  - Pascal/Volta → CUDA 12.9
-  - Turing+ → CUDA 13.3
+  - Pascal/Volta → CUDA 12
+  - Turing+ → CUDA 13
 - Check GPU utilization: `nvidia-smi dmon`
 
 ### Binary not found
@@ -131,9 +131,9 @@ cat /proc/driver/nvidia/version
 ## GPU Architecture by CUDA Version
 
 ```
-CUDA 12.9 (legacy): sm_60, sm_61, sm_62, sm_70, sm_72
-CUDA 13.3 (modern): sm_75, sm_80, sm_86, sm_89, sm_90,
-                     sm_100, sm_103, sm_110, sm_120, sm_121
+CUDA 12 (legacy): sm_60, sm_61, sm_62, sm_70, sm_72
+CUDA 13 (modern): sm_75, sm_80, sm_86, sm_89, sm_90,
+                   sm_100, sm_103, sm_110, sm_120, sm_121
 ```
 
 ## Additional Resources

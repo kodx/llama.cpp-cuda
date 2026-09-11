@@ -37,28 +37,28 @@ sudo ldconfig
 **Problem:** Error about missing libcudart, libcublas, etc. even after extraction.
 
 **Solution:**
-The CUDA runtime libraries are shipped in a separate `cuda-runtime-<ver>-<arch>.tar.gz`
+The CUDA runtime libraries are shipped in a separate `llama-cpp-cuda<major>-runtime-<arch>.tar.gz`
 archive. Both tarballs must be extracted in the same directory:
 
 ```bash
 # Extract both tarballs in the same parent directory
-tar -xzf llama.cpp-bXXXX-cuda-13.3-amd64.tar.gz
-tar -xzf cuda-runtime-13.3-amd64.tar.gz
+tar -xzf llama-cpp-bXXXX-cuda13-amd64.tar.gz
+tar -xzf llama-cpp-cuda13-runtime-amd64.tar.gz
 
 # Verify the runtime directory exists
-ls -la cuda-runtime-13.3/
+ls -la llama-cpp-cuda13-runtime/
 
-# Then run binaries from the cuda-13.3/ directory
-cd cuda-13.3
+# Then run binaries from the llama-cpp-cuda13/ directory
+cd llama-cpp-cuda13
 ./llama-cli --help
 ```
 
-The binaries have RPATH configured to find CUDA libraries in the sibling
-`cuda-runtime-<ver>/` directory automatically. If you extracted the tarballs to
+The binaries have RUNPATH configured to find CUDA libraries in the sibling
+`llama-cpp-cuda<major>-runtime/` directory automatically. If you extracted the tarballs to
 different locations, set `LD_LIBRARY_PATH` to point to the CUDA runtime directory:
 
 ```bash
-export LD_LIBRARY_PATH=/path/to/cuda-runtime-13.3:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=/path/to/llama-cpp-cuda13-runtime:$LD_LIBRARY_PATH
 ./llama-cli --help
 ```
 
@@ -80,8 +80,8 @@ export LD_LIBRARY_PATH=/path/to/cuda-runtime-13.3:$LD_LIBRARY_PATH
    ```
 
 2. **Use the other CUDA version build**:
-   - CUDA 12.9 requires driver 525-575
-   - CUDA 13.3 requires driver 580+
+   - CUDA 12 requires driver 525-575
+   - CUDA 13 requires driver 580+
    - See [GPU Compatibility Guide](GPU-COMPATIBILITY.md) for driver requirements
 
 #### "no CUDA-capable device is detected"
@@ -192,10 +192,10 @@ nvidia-smi dmon
 **Problem:** You have a new GPU but downloaded the wrong CUDA version.
 
 **Solution:**
-- RTX 40 series (8.9): CUDA 13.3
-- H100 (9.0): CUDA 13.3
-- Blackwell (10.0+): CUDA 13.3
-- Pascal (6.x), Volta (7.0): CUDA 12.9
+- RTX 40 series (8.9): CUDA 13
+- H100 (9.0): CUDA 13
+- Blackwell (10.0+): CUDA 13
+- Pascal (6.x), Volta (7.0): CUDA 12
 
 Download the appropriate build from releases.
 
@@ -210,8 +210,8 @@ nvidia-smi --query-gpu=compute_cap --format=csv,noheader
 
 **Solution:**
 Download the correct CUDA version build:
-- Pascal (6.x) or Volta (7.0/7.2) → CUDA 12.9
-- Turing (7.5) and newer → CUDA 13.3
+- Pascal (6.x) or Volta (7.0/7.2) → CUDA 12
+- Turing (7.5) and newer → CUDA 13
 
 ### Server Issues
 

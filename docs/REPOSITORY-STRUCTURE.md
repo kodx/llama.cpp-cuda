@@ -4,7 +4,9 @@
 kodx/llama.cpp-cuda/
 ├── .github/
 │   ├── workflows/
-│   │   └── build-cuda.yml          # Main CI/CD workflow for building with CUDA
+│   │   ├── build.yml               # Main CI/CD workflow for building with CUDA
+│   │   └── runtime.yml              # Standalone CUDA runtime packaging workflow
+
 │   └── ISSUE_TEMPLATE/
 │       ├── bug_report.md            # Bug report template
 │       └── feature_request.md       # Feature request template
@@ -29,11 +31,11 @@ kodx/llama.cpp-cuda/
 
 ### Core Files
 
-#### `.github/workflows/build-cuda.yml`
+#### `.github/workflows/build.yml`
 The heart of the project. This GitHub Actions workflow:
 - Runs daily at 00:00 UTC
 - Checks for new llama.cpp releases
-- Builds llama.cpp with CUDA for 2 versions (12.9 + 13.3), each for 2 architectures (amd64 + arm64)
+- Builds llama.cpp with CUDA for 2 versions (12 + 13), each for 2 architectures (amd64 + arm64)
 - CUDA runtime libraries in separate tarball (one-time download)
 - Creates GitHub releases with binary artifacts
 - Can be manually triggered
@@ -43,10 +45,10 @@ The heart of the project. This GitHub Actions workflow:
 - `ubuntu-24.04` for amd64, `ubuntu-24.04-arm` for arm64
 - `maximize-build-space` cleanup step for CI runners
 - GPU architectures split by CUDA version:
-  - 12.9: sm_60, sm_61, sm_62, sm_70, sm_72 (Pascal, Volta)
-  - 13.3: sm_75–sm_121 (Turing and newer)
+  - 12: sm_60, sm_61, sm_62, sm_70, sm_72 (Pascal, Volta)
+  - 13: sm_75–sm_121 (Turing and newer)
 - CPU multi-architecture dispatch: `GGML_CPU_ALL_VARIANTS=ON`, `GGML_BACKEND_DL=ON`
-- CUDA .so bundling via `ldd` detection, shipped as separate `cuda-runtime-<ver>-<arch>.tar.gz`
+- CUDA .so bundling via `ldd` detection, shipped as separate `llama-cpp-cuda<major>-runtime-<arch>.tar.gz`
 - CUDA Docker images based on Ubuntu 24.04 (instead of 22.04)
 - Release body with per-CUDA-version GPU architecture table and driver requirements
 
@@ -63,7 +65,7 @@ Main documentation covering:
 #### `QUICKSTART.md`
 Step-by-step guide for new users:
 1. Determine GPU compute capability
-2. Choose correct CUDA version (12.9 vs 13.3)
+2. Choose correct CUDA version (12 vs 13)
 3. Check driver compatibility
 4. Download and extract binaries
 5. Run first model
@@ -171,7 +173,7 @@ Scheduled Trigger (00:00 UTC) or Manual Trigger
     Build Matrix (4 variants)
               ↓
     ┌─────────────────────────┬─────────────────────────┐
-    │       CUDA 12.9         │       CUDA 13.3         │
+    │       CUDA 12          │       CUDA 13          │
     │   sm_60,61,62,70,72     │   sm_75–sm_121          │
     ├────────────┬────────────┼────────────┬────────────┤
     │   amd64    │   arm64    │   amd64    │   arm64    │
@@ -186,7 +188,7 @@ Scheduled Trigger (00:00 UTC) or Manual Trigger
     Bundle CUDA .so via ldd
               ↓
     Package as Tarball
-    llama.cpp-bXXXX-cuda-<ver>-<arch>.tar.gz
+    llama-cpp-bXXXX-cuda<major>-<arch>.tar.gz
               ↓
     Upload Artifact
               ↓
@@ -202,12 +204,12 @@ Scheduled Trigger (00:00 UTC) or Manual Trigger
 ### Architecture Selection Logic
 
 ```
-CUDA 12.9 (last CUDA 12.x for legacy GPUs):
+CUDA 12 (legacy GPUs):
     Architectures: 60, 61, 62, 70, 72
     (Pascal, Volta — dropped from CUDA 13)
     Driver 525-575
 
-CUDA 13.3 (modern GPUs):
+CUDA 13 (modern GPUs):
     Architectures: 75, 80, 86, 89, 90, 100, 103, 110, 120, 121
     (Turing, Ampere, Ada, Hopper, Blackwell)
     Driver 580+
@@ -224,12 +226,12 @@ CUDA 13.3 (modern GPUs):
 
 After the build, `ldd` is run on every binary in `build/bin/` to detect which CUDA
 shared libraries are needed. Those `.so` files (libcudart, libcublas, etc.) are copied
-into a separate `cuda-runtime-<ver>-<arch>.tar.gz` archive, separate from the llama.cpp
+into a separate `llama-cpp-cuda<major>-runtime-<arch>.tar.gz` archive, separate from the llama.cpp
 binaries. This allows users to download the CUDA runtime once and reuse it across
 llama.cpp builds that use the same CUDA version.
 
-The binaries have RPATH set to `$ORIGIN:$ORIGIN/../cuda-runtime-<ver>`, so they first
-look for CUDA libraries in their own directory, then in the sibling `cuda-runtime-<ver>/`
+The binaries have RUNPATH set to `$ORIGIN:$ORIGIN/../llama-cpp-cuda<major>-runtime`, so they first
+look for CUDA libraries in their own directory, then in the sibling `llama-cpp-cuda<major>-runtime/`
 directory, and finally fall back to the system library path. This means both tarballs
 should be extracted in the same parent directory.
 
