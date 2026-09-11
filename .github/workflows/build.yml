@@ -56,12 +56,10 @@ jobs:
         cuda:
           - version: "12.9.2"
             short: "12.9"
-            major: "12"
             architectures: "60;61;62;70;72"
             tag: "12.9.2-cudnn-devel-ubuntu24.04"
           - version: "13.3.0"
             short: "13.3"
-            major: "13"
             architectures: "75;80;86;89;90;100;103;110;120;121"
             tag: "13.3.0-cudnn-devel-ubuntu24.04"
         arch:
@@ -72,6 +70,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Compute CUDA major
+        env:
+          CUDA_VERSION: ${{ matrix.cuda.version }}
+        run: echo "CUDA_MAJOR=${CUDA_VERSION%%.*}" >> "$GITHUB_ENV"
       - name: Maximize build space
         run: |
           echo "=== Initial Disk Space ==="
@@ -141,7 +143,7 @@ jobs:
                 -DGGML_CPU_ALL_VARIANTS=ON \
                 -DLLAMA_BUILD_TESTS=OFF \
                 -DLLAMA_BUILD_EXAMPLES=OFF \
-                -DCMAKE_INSTALL_RPATH='\$ORIGIN:\$ORIGIN/../llama-cpp-cuda${{ matrix.cuda.major }}-runtime:\$ORIGIN/../lib/llama-cpp-cuda${{ matrix.cuda.major }}-runtime' \
+                -DCMAKE_INSTALL_RPATH='\$ORIGIN:\$ORIGIN/../llama-cpp-cuda$CUDA_MAJOR-runtime:\$ORIGIN/../lib/llama-cpp-cuda$CUDA_MAJOR-runtime' \
                 -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
                 -DCMAKE_EXE_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
                 -DCMAKE_SHARED_LINKER_FLAGS='-Wl,-rpath-link,/usr/local/cuda/lib64/stubs' \
@@ -152,28 +154,28 @@ jobs:
 
               echo '=== Copying binaries ==='
               cd /workspace
-              mkdir -p binaries/llama-cpp-cuda${{ matrix.cuda.major }}
+              mkdir -p binaries/llama-cpp-cuda$CUDA_MAJOR
 
-              cp -r llama.cpp/build/bin/* binaries/llama-cpp-cuda${{ matrix.cuda.major }}/
+              cp -r llama.cpp/build/bin/* binaries/llama-cpp-cuda$CUDA_MAJOR/
 
               if [ -d llama.cpp/build/lib ]; then
-                find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ \; 2>/dev/null || true
+                find llama.cpp/build/lib -name '*.so*' -exec cp {} binaries/llama-cpp-cuda$CUDA_MAJOR/ \; 2>/dev/null || true
               fi
 
-              find binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
-              find binaries/llama-cpp-cuda${{ matrix.cuda.major }}/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
+              find binaries/llama-cpp-cuda$CUDA_MAJOR/ -type f -name '*.so*' -exec strip --strip-unneeded {} \; 2>/dev/null || true
+              find binaries/llama-cpp-cuda$CUDA_MAJOR/ -type f -executable ! -name '*.so*' -exec strip {} \; 2>/dev/null || true
 
               cd /workspace
               echo '=== Creating version info ==='
-              echo 'llama.cpp version: ${{ needs.check-release.outputs.release_tag }}' > binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
-              echo 'CUDA version: ${{ matrix.cuda.version }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
-              echo 'CUDA major: ${{ matrix.cuda.major }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
-              echo 'Architectures: ${{ matrix.cuda.architectures }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
-              echo 'Build date: '\$(date -u +%Y-%m-%d) >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
-              echo 'Build hash: ${{ needs.check-release.outputs.release_hash }}' >> binaries/llama-cpp-cuda${{ matrix.cuda.major }}/VERSION.txt
+              echo 'llama.cpp version: ${{ needs.check-release.outputs.release_tag }}' > binaries/llama-cpp-cuda$CUDA_MAJOR/VERSION.txt
+              echo 'CUDA version: ${{ matrix.cuda.version }}' >> binaries/llama-cpp-cuda$CUDA_MAJOR/VERSION.txt
+              echo 'CUDA major: '$CUDA_MAJOR >> binaries/llama-cpp-cuda$CUDA_MAJOR/VERSION.txt
+              echo 'Architectures: ${{ matrix.cuda.architectures }}' >> binaries/llama-cpp-cuda$CUDA_MAJOR/VERSION.txt
+              echo 'Build date: '\$(date -u +%Y-%m-%d) >> binaries/llama-cpp-cuda$CUDA_MAJOR/VERSION.txt
+              echo 'Build hash: ${{ needs.check-release.outputs.release_hash }}' >> binaries/llama-cpp-cuda$CUDA_MAJOR/VERSION.txt
 
               echo '=== Build complete ==='
-              ls -lh binaries/llama-cpp-cuda${{ matrix.cuda.major }}/
+              ls -lh binaries/llama-cpp-cuda$CUDA_MAJOR/
 
               echo '=== Cleaning up build directory ==='
               rm -rf llama.cpp
@@ -188,17 +190,17 @@ jobs:
       - name: Create tarball
         run: |
           cd binaries
-          tar -czf llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda${{ matrix.cuda.major }}-${{ matrix.arch.name }}.tar.gz llama-cpp-cuda${{ matrix.cuda.major }}
+          tar -czf "llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda${CUDA_MAJOR}-${{ matrix.arch.name }}.tar.gz" "llama-cpp-cuda${CUDA_MAJOR}"
           ls -lh ./*.tar.gz
       - name: Smoke test
         run: |
           cd binaries || exit 1
-          tarball="llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda${{ matrix.cuda.major }}-${{ matrix.arch.name }}.tar.gz"
+          tarball="llama-cpp-${{ needs.check-release.outputs.release_tag }}-cuda$CUDA_MAJOR-${{ matrix.arch.name }}.tar.gz"
           if [ ! -f "$tarball" ]; then echo "Missing: $tarball"; exit 1; fi
           echo "Tarball: $(stat -c%s "$tarball") bytes"
           dir="smoke"
           mkdir -p "$dir" && tar -xzf "$tarball" -C "$dir"
-          bindir="$dir/llama-cpp-cuda${{ matrix.cuda.major }}"
+          bindir="$dir/llama-cpp-cuda$CUDA_MAJOR"
           for bin in llama-cli llama-server llama-bench; do
             if [ -f "$bindir/$bin" ] && [ -s "$bindir/$bin" ]; then
               echo "Pass: $bin ($(stat -c%s "$bindir/$bin") bytes)"
