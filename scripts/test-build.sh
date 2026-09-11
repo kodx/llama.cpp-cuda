@@ -136,6 +136,12 @@ EOFBUILD
         echo '=> Build complete!'
         ls -lh binaries/llama-cpp-cuda${CUDA_MAJOR}/
     "
+echo -e "${YELLOW}Fixing file ownership...${NC}"
+docker run --rm -v "$PWD":/workspace \
+    -e "HOST_UID=$(id -u)" -e "HOST_GID=$(id -g)" \
+    nvidia/cuda:$CUDA_TAG \
+    bash -c "chown -R \"\$HOST_UID:\$HOST_GID\" /workspace/binaries/llama-cpp-cuda${CUDA_MAJOR}"
+
 echo ""
 echo -e "${GREEN}Creating tarball...${NC}"
 tar -czf "archives/llama-cpp-${LLAMA_TAG}-cuda${CUDA_MAJOR}.tar.gz" -C binaries "llama-cpp-cuda${CUDA_MAJOR}"
