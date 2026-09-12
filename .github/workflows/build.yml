@@ -228,8 +228,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -249,12 +247,46 @@ jobs:
         run: |
           set -euo pipefail
           TAG="${{ needs.check-release.outputs.release_tag }}"
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit --allow-empty \
-            -m "llama.cpp ${TAG} (CUDA build $(date -u +%Y-%m-%dT%H:%M:%SZ))"
-          git tag "${TAG}"
-          git push origin "refs/tags/${TAG}"
+          REPO="${{ github.repository }}"
+          BRANCH="${{ github.event.repository.default_branch }}"
+          NOW="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          echo "=== Checking if tag ${TAG} already exists ==="
+          if curl -sf -H "Authorization: Bearer ${{ github.token }}" \
+              "https://api.github.com/repos/${REPO}/git/refs/tags/${TAG}" >/dev/null; then
+            echo "Tag ${TAG} already exists remotely, skipping"
+            exit 0
+          fi
+
+          echo "=== Resolving branch ${BRANCH} ==="
+          BRANCH_JSON=$(curl -sS --fail -H "Authorization: Bearer ${{ github.token }}" \
+            "https://api.github.com/repos/${REPO}/branches/${BRANCH}")
+          MAIN_SHA=$(jq -r .commit.sha <<< "$BRANCH_JSON")
+          TREE_SHA=$(jq -r .commit.commit.tree.sha <<< "$BRANCH_JSON")
+
+          echo "=== Creating empty anchor commit ==="
+          COMMIT_JSON=$(curl -sS --fail -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/git/commits" \
+            -d "$(jq -nc \
+              --arg msg "llama.cpp ${TAG} (CUDA build ${NOW})" \
+              --arg tree "$TREE_SHA" \
+              --arg parent "$MAIN_SHA" \
+              '{message:$msg, tree:$tree, parents:[$parent],
+                author:{name:"github-actions[bot]", email:"41898282+github-actions[bot]@users.noreply.github.com"},
+                committer:{name:"github-actions[bot]", email:"41898282+github-actions[bot]@users.noreply.github.com"}}')")
+          NEW_SHA=$(jq -r .sha <<< "$COMMIT_JSON")
+
+          echo "=== Creating tag ref ${TAG} ==="
+          curl -sS --fail -X POST \
+            -H "Authorization: Bearer ${{ github.token }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${REPO}/git/refs" \
+            -d "$(jq -nc --arg ref "refs/tags/${TAG}" --arg sha "$NEW_SHA" \
+              '{ref:$ref, sha:$sha}')"
+
+          echo "Created tag ${TAG} at commit ${NEW_SHA}"
 
       - name: Create Release
         uses: softprops/action-gh-release@v3
