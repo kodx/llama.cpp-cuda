@@ -1,4 +1,5 @@
 name: Build llama.cpp with CUDA support
+run-name: Build llama.cpp with CUDA (12 + 13)
 on:
   schedule:
     - cron: '0 0 * * *'
@@ -74,6 +75,8 @@ jobs:
         env:
           CUDA_VERSION: ${{ matrix.cuda.version }}
         run: echo "CUDA_MAJOR=${CUDA_VERSION%%.*}" >> "$GITHUB_ENV"
+      - name: Building ${{ needs.check-release.outputs.release_tag }}
+        run: echo "Building llama.cpp ${{ needs.check-release.outputs.release_tag }}"
       - name: Maximize build space
         run: |
           echo "=== Initial Disk Space ==="
@@ -313,4 +316,3 @@ jobs:
                 gh release delete "$release" --repo "$REPO" --yes --cleanup-tag
               fi
             done
-
